@@ -82,7 +82,7 @@ save_current_color = (0, 0, 0)
 look = 0
 pr = 0
 
-
+last_request = {}
 em = list(colors.keys())
 em_kb = [types.KeyboardButton(text=i) for i in em]
 
@@ -397,6 +397,13 @@ async def main_logic(msg):
     global current_color
     global pr
     global mode
+    global last_request
+
+    if (msg.from_user.id in last_request) and (time.time() - last_request[msg.from_user.id] < 5.0):
+        await msg.reply("Попробуй позже")
+        return
+
+    last_request[msg.from_user.id] = time.time()
     
     if msg.text == 'main':
         mode = 'main'
