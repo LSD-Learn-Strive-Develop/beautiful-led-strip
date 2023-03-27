@@ -25,7 +25,7 @@ url = "https://api.weather.yandex.ru/v2/informers?lat=59.873546&lon=29.827624&la
 headers = CaseInsensitiveDict()
 headers["X-Yandex-API-Key"] = "a49c927e-27e2-4089-bf2e-0c865e207104"
 
-mode = 'user'
+mode = 'main'
 pixels_count = 392
 pixels = neopixel.NeoPixel(board.D18, 392, auto_write=False,)
 
@@ -47,8 +47,9 @@ colors_ind = {}
 for k, v in ind_colors.items():
     colors_ind[v] = k
 
-rgb = {"Красный": (255, 0, 0), "Оранжевый": (255, 165, 0), "Желтый": (255, 255, 0),
-        "Зеленый": (0, 128, 0), "Синий": (0, 0, 255), "Фиолетовый": (128, 0, 128),
+# оранж (255, 165, 0)
+rgb = {"Красный": (255, 0, 0), "Оранжевый": (251, 153, 2), "Желтый": (153, 153, 0),
+        "Зеленый": (0, 255, 0), "Синий": (0, 0, 255), "Фиолетовый": (128, 0, 128),
         "Черный": (0, 0, 0), "Белый": (255, 255, 255), "Коричневый": (165, 42, 42)}
 
 
@@ -220,7 +221,6 @@ async def Wheel(WheelPos):
 
 async def rainbowCycle(wait=0.002):
     for j in range(256):
-        print(j)
         for i in range(392):
             pixels[i] = await Wheel((int(i * 256 / 392) + j) & 255)
 
@@ -260,6 +260,7 @@ async def print_countdown():
 
     save_countdown = countdown_str
 
+
 async def print_current_time():
     global save_time
 
@@ -267,7 +268,7 @@ async def print_current_time():
     print(time_str)
 
     for i in range(4):
-        await change_symbol_opt(i, int(time_str[i]), True)
+        await change_symbol_opt(i, int(time_str[i]))
 
     save_time = time_str
 
@@ -275,12 +276,12 @@ async def print_current_time():
 async def print_current_year():
     time_str = datetime.now().strftime('%Y')
     for i in range(4):
-        await change_symbol_opt(i, int(time_str[i]), True)
+        await change_symbol_opt(i, int(time_str[i]))
 
 
 async def print_word(word):
     for i in range(len(word)):
-        await change_symbol_opt(i, word[i], True)
+        await change_symbol_opt(i, word[i])
 
 
 async def all_black():
@@ -301,82 +302,25 @@ async def timer():
     while True:
         year_str = datetime.now().strftime('%Y')
         new_current_color = get_current_color()
+        time_str = datetime.now().strftime('%H%M')
 
-        if year_str[-1] == '2':
-            time_str = datetime.now().strftime('%H%M')
-            print(time_str)
-            
-            if time_str == '0000':
-                year_str = datetime.now().strftime('%Y')
-                print(year_str)
-                while year_str[-1] == '2':
-                    await all_black()
-                    time_str = datetime.now().strftime('%S')
-                    time_str = str(60 - int(time_str))
+        if mode == 'main':
+            if time_str != save_time or save_current_color != new_current_color:
+                await get_weather()
+                await asyncio.sleep(5)
 
-                    if len(time_str) == 2:
-                        for i in range(2):
-                            await change_symbol_opt(2 + i, int(time_str[i]), True)
-                    elif len(time_str) == 1:
-                        await change_symbol_opt(3, int(time_str[0]), True)
-
-                    await asyncio.sleep(0.9)
-                    year_str = datetime.now().strftime('%Y')
-
-                continue
-
-            countdown = get_countdown()
-            if countdown != save_countdown or save_current_color != new_current_color:
-                await print_countdown()
+                await print_current_time()
                 await asyncio.sleep(5)
         else:
-            print('heppy')
-            time_str = datetime.now().strftime('%H%M')
-            print(time_str)
-            '''
-            if time_str != '0000':
-                year_str = datetime.now().strftime('%Y')
-                print(year_str)
-                while year_str[-1] == '2':
-                    await all_black()
-                    time_str = datetime.now().strftime('%S')
-                    time_str = str(60 - int(time_str))
+            if save_current_color != new_current_color:
+                await print_current_time()
+                await asyncio.sleep(5)
 
-                    if len(time_str) == 2:
-                        for i in range(2):
-                            await change_symbol_opt(2 + i, int(time_str[i]), True)
-                    elif len(time_str) == 1:
-                        await change_symbol_opt(3, int(time_str[0]), True)
+                await get_weather()
+                await asyncio.sleep(5)
 
-                    await asyncio.sleep(0.9)
-
-                continue
-            '''
-            if mode == 'main':
-                if time_str != save_time or save_current_color != new_current_color:
-                    #await print_word('С_НГ')
-                    #await asyncio.sleep(5)
-
-                    #await print_current_year()
-                    #await asyncio.sleep(5)
-                    await get_weather()
-                    await asyncio.sleep(5)
-
-                    await print_current_time()
-                    await asyncio.sleep(5)
-            else:
-                if save_current_color != new_current_color:
-                    await print_current_time()
-                    await asyncio.sleep(5)
-
-                    await get_weather()
-                    await asyncio.sleep(5)
-                   
-                    await print_current_year()
-                    await asyncio.sleep(5)
-
-                    #await print_word('2023')
-
+                await print_current_year()
+                await asyncio.sleep(5)
 
         await asyncio.sleep(wait)
 
@@ -449,10 +393,10 @@ async def main_logic(msg):
     #await asyncio.sleep(5)
     look = 0
     try:
-        await bot.send_message(248603604, '@' + msg.from_user.username + ' изменил цвет')
+        await bot.send_message(248603604, '@' + msg.from_user.username + ' изменил цвет ' + msg.text)
     except Exception as e:
         print(e)
-        await bot.send_message(248603604, 'error')
+        await bot.send_message(248603604, '@' + msg.from_user.first_name + ' изменил цвет ' + msg.text)
 
     await msg.answer('Цвет изменен', reply_markup=general_kb)
 
