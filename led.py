@@ -219,13 +219,26 @@ async def Wheel(WheelPos):
         return (0, WheelPos * 3, 255 - WheelPos * 3)
 
 
+async def rainbowCycle(wait=1):
+    for r in range(25):
+        for g in range(25):
+            for b in range(25):
+                color = (r*10, g*10, b*10)
+                for p in range(392):
+                    pixels[p] = color
+                print(color)
+                pixels.show()
+                await asyncio.sleep(wait)
+
+
+'''
 async def rainbowCycle(wait=0.002):
     for j in range(256):
         for i in range(392):
             pixels[i] = await Wheel((int(i * 256 / 392) + j) & 255)
-
         pixels.show()
         #await asyncio.sleep(wait)
+'''
 
 
 def get_countdown():
