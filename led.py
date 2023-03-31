@@ -201,9 +201,9 @@ async def get_weather():
             temp = ' ' + temp
         for i in range(min(4, len(temp))):
             try:
-                await change_symbol_opt(i, int(temp[i]), True)
+                await change_symbol_opt(i, int(temp[i]))
             except Exception as e:
-                await change_symbol_opt(i, temp[i], True)
+                await change_symbol_opt(i, temp[i])
     except Exception as e:
         print(e)
 
