@@ -1,3 +1,4 @@
+import symbols
 import board
 import neopixel
 import time
@@ -32,51 +33,6 @@ pixels = neopixel.NeoPixel(board.D18, 392, auto_write=False,)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-colors = {"❤️": "Красный", "🧡": "Оранжевый", "💛": "Желтый",
-        "💚": "Синий", "💙": "Зеленый", "💜": "Оранжевый",
-        "🖤": "Черный", "🤍": "Белый", "🤎": "Коричневый"}
-
-rainbow = '🌈'
-temperature = '🌡'
-
-ind_colors = {0: "Красный", 1: "Оранжевый", 2: "Желтый",
-            3: "Зеленый", 4: "Синий", 5: "Фиолетовый",
-            6: "Черный", 7: "Белый", 8: "Коричневый"}
-
-colors_ind = {}
-for k, v in ind_colors.items():
-    colors_ind[v] = k
-
-# оранж (255, 165, 0)
-rgb = {"Красный": (255, 0, 0), "Оранжевый": (251, 153, 2), "Желтый": (153, 153, 0),
-        "Зеленый": (0, 255, 0), "Синий": (0, 0, 255), "Фиолетовый": (128, 0, 128),
-        "Черный": (0, 0, 0), "Белый": (255, 255, 255), "Коричневый": (165, 42, 42)}
-
-
-nums = {
-    0: [ [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0] ],
-    1: [ [1, 1], [6, 1] ],
-    2: [ [2, 1], [1, 1], [7, 0], [4, 0], [5, 0] ],
-    3: [ [2, 1], [1, 1], [7, 0], [6, 1], [5, 1] ],
-    4: [ [3, 0], [7, 1], [1, 0], [6, 1] ],
-    5: [ [2, 0], [3, 0], [7, 1], [6, 1], [5, 1] ],
-    6: [ [2, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0] ],
-    7: [ [2, 1], [1, 1], [6, 1] ],
-    8: [ [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0] ],
-    9: [ [7, 0], [3, 1], [2, 1], [1, 1], [6, 1], [5, 1] ]
-}
-
-
-char = {
-    'С': [ [2, 0], [3, 0], [4, 0], [5, 0] ],
-    '_': [ [5, 0] ],
-    'Н': [ [3, 0], [4, 0], [7, 1], [1, 0], [6, 1] ],
-    'Г': [ [2, 0], [3, 0], [4, 0] ],
-    'о': [ [1, 0], [2, 0], [3, 0], [7, 1] ],
-    '-': [ [7, 1] ],
-    ' ': []
-}
-
 save_time = 0
 save_countdown = 0
 save_current_color = (0, 0, 0)
@@ -84,14 +40,14 @@ look = 0
 pr = 0
 
 last_request = {}
-em = list(colors.keys())
+em = list(symbols.colors.keys())
 em_kb = [types.KeyboardButton(text=i) for i in em]
 
 builder = ReplyKeyboardBuilder()
 for i in range(9):
     builder.add(em_kb[i])
 
-builder.add(types.KeyboardButton(text=rainbow), types.KeyboardButton(text=temperature))
+builder.add(types.KeyboardButton(text=symbols.rainbow), types.KeyboardButton(text=symbols.temperature))
 
 builder.adjust(3, 3, 3, 2)
 general_kb = builder.as_markup(resize_keyboard=True)
@@ -128,10 +84,10 @@ async def change_symbol_opt(symbol_number, symbol, fast=False):
     pixels.show()
 
     blocks = []
-    if symbol in nums:
-        blocks = nums[symbol]
-    elif symbol in char:
-        blocks = char[symbol]
+    if symbol in symbols.nums:
+        blocks = symbols.nums[symbol]
+    elif symbol in symbols.chars:
+        blocks = symbols.chars[symbol]
     else:
         print('ops')
         return
@@ -152,6 +108,10 @@ async def change_symbol_opt(symbol_number, symbol, fast=False):
                 pixels.show()
     if fast:
         pixels.show()
+
+
+#async def change_special_symbol():
+
 
 
 async def get_weather():
@@ -193,7 +153,7 @@ async def get_weather():
 
         wait = 1
         print('temp', temp)
-        temp = temp + 'оС'
+        temp = temp + '*С'
         #for i in range(392):
         #    pixels[i] = (0, 0, 0)
         #pixels.show()
@@ -209,9 +169,9 @@ async def get_weather():
 
 
 async def Wheel(WheelPos):
-    if(WheelPos < 85):
+    if (WheelPos < 85):
         return (WheelPos * 3, 255 - WheelPos * 3, 0)
-    elif(WheelPos < 170):
+    elif (WheelPos < 170):
         WheelPos -= 85
         return (255 - WheelPos * 3, 0, WheelPos * 3)
     else:
@@ -297,6 +257,22 @@ async def print_word(word):
         await change_symbol_opt(i, word[i])
 
 
+async def print_string(s):
+    s = s + "    "
+    for j in range(len(s)):
+        if j + 4 <= len(s):
+            temp = [s[j], s[j+1], s[j+2], s[j+3]]
+            print('temp: ', temp)
+            for i in range(len(temp)):
+                try:
+                    await change_symbol_opt(i, int(temp[i]), True)
+                except Exception as e:
+                    await change_symbol_opt(i, temp[i], True)
+        else:
+            return
+        await asyncio.sleep(0.7)
+
+
 async def all_black():
     global pixels_count
     for i in range(pixels_count):
@@ -366,45 +342,27 @@ async def main_logic(msg):
         mode = 'main'
     elif msg.text == 'user':
         mode = 'user'
-    elif len(msg.text) == 1 and msg.text >= '0' and msg.text <= '9':
-        num = int(msg.text)
-        #pr = num
-        change_digit(num)
 
-    elif msg.text in colors.keys():
-        print("rgb", rgb[colors[msg.text]], rgb[colors[msg.text]][0])
-
-        col = rgb[colors[msg.text]]
+    elif msg.text in symbols.colors.keys():
+        col = symbols.rgb[symbols.colors[msg.text]]
+        print("rgb", col, col[0])
         current_color = str(col[0]) + ' ' + str(col[1]) + ' ' + str(col[2])
         with open('color.txt', 'w') as f:
             f.write(current_color)
-
         #await current_time()
-    elif msg.text == rainbow:
+
+    elif msg.text == symbols.rainbow:
         await rainbowCycle(2)
 
-    elif msg.text == temperature:
+    elif msg.text == symbols.temperature:
         await get_weather()
 
     else:
         try:
-            li = msg.text.split()
-            print(li)
-            mass = list(map(int, msg.text.split()))
-            if len(mass) == 3 and mass[0] <= 255 and mass[1] <= 255 and mass[2] <= 255:
-                current_color = str(mass[0]) + ' ' + str(mass[1]) + ' ' + str(mass[2])
-
-                with open('color.txt', 'w') as f:
-                    f.write(current_color)
-
-                change(1)
+            await print_string(msg.text)
         except Exception as e:
             print("oops")
-        #for i in range(0, 100):
-        #    pixels[i] = rgb[c]
-        
-    #await asyncio.sleep(5)
-    look = 0
+
     try:
         await bot.send_message(248603604, '@' + msg.from_user.username + ' изменил цвет ' + msg.text)
     except Exception as e:
