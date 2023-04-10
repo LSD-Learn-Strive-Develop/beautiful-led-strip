@@ -88,19 +88,30 @@ async def change_symbol_opt(symbol_number, symbol, fast=False):
         blocks = symbols.nums[symbol]
     elif symbol in symbols.chars:
         blocks = symbols.chars[symbol]
+    elif symbol in symbols.special_chars[symbol]:
+        blocks = symbols.special_chars[symbol]
     else:
         print('ops')
         return
 
     for block in blocks:
-        start = 0
-        stop = 14
-        step = 1
-
-        if block[1] == 1:
-            start = 13
-            stop = -1
+        if block[1] == 0:
+            step = 1
+        else:
             step = -1
+
+        if len(block) == 2:
+            start = 0
+            stop = 14
+            if block[1] == 1:
+                start = 13
+                stop = -1
+        else:
+            start = block[2]
+            stop = block[3]
+            if block[1] == 1:
+                start = block[3] - 1
+                stop = block[2] - 1
 
         for j in range(start, stop, step):
             pixels[shift + 14 * (block[0] - 1) + j] = current_color
@@ -108,10 +119,6 @@ async def change_symbol_opt(symbol_number, symbol, fast=False):
                 pixels.show()
     if fast:
         pixels.show()
-
-
-#async def change_special_symbol():
-
 
 
 async def get_weather():
@@ -179,7 +186,7 @@ async def Wheel(WheelPos):
         return (0, WheelPos * 3, 255 - WheelPos * 3)
 
 
-async def rainbowCycle(wait=1):
+async def rainbowCycle(wait=0.03):
     for r in range(25):
         for g in range(25):
             for b in range(25):
@@ -258,7 +265,7 @@ async def print_word(word):
 
 
 async def print_string(s):
-    s = s + "    "
+    s = "    " + s + "    "
     for j in range(len(s)):
         if j + 4 <= len(s):
             temp = [s[j], s[j+1], s[j+2], s[j+3]]
@@ -321,7 +328,7 @@ async def start_bot():
 @dp.message(Command('start'))
 async def process_start_command(message):
     await message.reply("Привет!\nОтправляй мне эмодзи-сердечки и я буду менять цвет ленты в цвет отправленного сердечка",
-        reply_markup=general_kb)
+                        reply_markup=general_kb)
 
 
 @dp.message(F.content_type=='text')
