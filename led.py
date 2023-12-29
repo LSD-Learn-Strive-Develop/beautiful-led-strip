@@ -38,6 +38,9 @@ save_countdown = 0
 save_current_color = (0, 0, 0)
 look = 0
 pr = 0
+show_item = None
+ny_time = "1/1/24 00:00:00"
+#ny_time = "29/12/23 14:58:00"
 
 last_request = {}
 em = list(symbols.colors.keys())
@@ -207,36 +210,48 @@ async def rainbowCycle(wait=0.002):
         #await asyncio.sleep(wait)
 
 
-
 def get_countdown():
-    dt_ny = datetime.strptime("1/1/23 00:00", "%d/%m/%y %H:%M")
+    global ny_time
+    dt_ny = datetime.strptime(ny_time, "%d/%m/%y %H:%M:%S")
     dt_now = datetime.now()
     dt = dt_ny - dt_now
-
+    
+    seconds = int(dt.total_seconds()) % 60
     minutes = int(dt.total_seconds()) // 60
     hours = minutes // 60
     minutes %= 60
     print(hours, minutes)
+    
+    if hours == 0:
+        minutes = str(minutes)
+        if len(minutes) < 2:
+            minutes = '0' + minutes
 
-    hours = str(hours)
-    if len(hours) < 2:
-        hours = '0' + hours
+        seconds = str(seconds)
+        if len(seconds) < 2:
+            seconds = '0' + seconds
 
-    minutes = str(minutes)
-    if len(minutes) < 2:
-        minutes = '0' + minutes
+        time_str = minutes + seconds
+    else:
+        hours = str(hours)
+        if len(hours) < 2:
+            hours = '0' + hours
 
-    time_str = hours + minutes
+        minutes = str(minutes)
+        if len(minutes) < 2:
+            minutes = '0' + minutes
+
+        time_str = hours + minutes
 
     return time_str
 
 
-async def print_countdown():
+async def print_countdown(fast):
     global save_countdown
 
     countdown_str = get_countdown()
     for i in range(4):
-        await change_symbol_opt(i, int(countdown_str[i]))
+        await change_symbol_opt(i, int(countdown_str[i]), fast)
 
     save_countdown = countdown_str
 
@@ -292,13 +307,38 @@ async def timer():
     global save_countdown
     global save_current_color
     global mode
+    global show_item
 
     wait = 5
 
     while True:
+        if mode in ['main', 'user', 'fight']:
+            wait = 5
+        else:
+            wait = 0.5
+
         year_str = datetime.now().strftime('%Y')
         new_current_color = get_current_color()
         time_str = datetime.now().strftime('%H%M')
+        
+        if show_item == 1:
+            if mode != 'main':
+                await print_current_time()
+                await asyncio.sleep(wait)
+
+            show_item = None
+        elif show_item == 3:
+            await get_weather()
+
+        elif show_item == 2:
+            await rainbowCycle(2)
+
+        elif type(show_item) == str:
+            await print_string(msg.text)
+        
+        if show_item != None:
+            show_item = None
+            await asyncio.sleep(wait)
 
         if mode == 'main':
             if time_str != save_time or save_current_color != new_current_color:
@@ -307,17 +347,43 @@ async def timer():
 
                 await print_current_time()
                 await asyncio.sleep(5)
-        else:
+
+        elif mode == 'user':
             if save_current_color != new_current_color:
+                await get_weather()
+                await asyncio.sleep(5)
+                
+                await print_string('ПУНК С НОВЫМ ГОДОМ')
+                
                 await print_current_time()
                 await asyncio.sleep(5)
 
-                await get_weather()
-                await asyncio.sleep(5)
+        elif mode in ['fight', 'fight_fast']:
+            global ny_time
+            dt_ny = datetime.strptime(ny_time, "%d/%m/%y %H:%M:%S")
 
-                await print_current_year()
-                await asyncio.sleep(5)
+            dt_now = datetime.now()
+            dt = dt_ny - dt_now
+            
+            if dt_ny > dt_now:
+                if save_countdown != get_countdown() or save_current_color != new_current_color:
+                    print('new color')
+                    fast = False
+                    if mode == 'fight_fast':
+                        fast = True
+                    
+                    print('print sec')
 
+                    await print_countdown(fast)
+                
+                if int(dt.total_seconds()) < 60:
+                    mode = 'fight_fast'
+                    wait = 0.5
+            else:
+                mode = 'user'
+                await print_string('СПБГУ С НГ!')
+                await rainbowCycle(2)
+            
         await asyncio.sleep(wait)
 
 
@@ -338,6 +404,7 @@ async def main_logic(msg):
     global pr
     global mode
     global last_request
+    global show_item
 
     if (msg.from_user.id in last_request) and (time.time() - last_request[msg.from_user.id] < 5.0):
         await msg.reply("Попробуй позже")
@@ -345,10 +412,8 @@ async def main_logic(msg):
 
     last_request[msg.from_user.id] = time.time()
     
-    if msg.text == 'main':
-        mode = 'main'
-    elif msg.text == 'user':
-        mode = 'user'
+    if msg.text in ['main', 'user', 'fight']:
+        mode = msg.text
 
     elif msg.text in symbols.colors.keys():
         col = symbols.rgb[symbols.colors[msg.text]]
@@ -357,12 +422,15 @@ async def main_logic(msg):
         with open('color.txt', 'w') as f:
             f.write(current_color)
         #await current_time()
+        show_item = 1
 
     elif msg.text == symbols.rainbow:
-        await rainbowCycle(2)
+        #await rainbowCycle(2)
+        show_item = 2
 
     elif msg.text == symbols.temperature:
-        await get_weather()
+        #await get_weather()
+        show_item = 3
 
     else:
         admins = [758017709, 248603604, 356384042, 718868214, 355825999, 446574710, 724536101, 405629002]
@@ -376,7 +444,8 @@ async def main_logic(msg):
 
             print(msg.from_user.id)
             if msg.from_user.id in admins and flag_s == 0:
-                await print_string(msg.text)
+                #await print_string(msg.text)
+                show_item = msg.text
         except Exception as e:
             print("oops")
 
