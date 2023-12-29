@@ -185,7 +185,7 @@ async def Wheel(WheelPos):
         WheelPos -= 170
         return (0, WheelPos * 3, 255 - WheelPos * 3)
 
-
+'''
 async def rainbowCycle(wait=0.03):
     for r in range(25):
         for g in range(25):
@@ -196,16 +196,16 @@ async def rainbowCycle(wait=0.03):
                 print(color)
                 pixels.show()
                 await asyncio.sleep(wait)
-
-
 '''
+
+
 async def rainbowCycle(wait=0.002):
     for j in range(256):
         for i in range(392):
             pixels[i] = await Wheel((int(i * 256 / 392) + j) & 255)
         pixels.show()
         #await asyncio.sleep(wait)
-'''
+
 
 
 def get_countdown():
@@ -333,7 +333,7 @@ async def process_start_command(message):
 
 @dp.message(F.content_type=='text')
 async def main_logic(msg):
-    print(msg)
+    #print(msg)
     global current_color
     global pr
     global mode
@@ -365,8 +365,18 @@ async def main_logic(msg):
         await get_weather()
 
     else:
+        admins = [758017709, 248603604, 356384042, 718868214, 355825999, 446574710, 724536101, 405629002]
         try:
-            await print_string(msg.text)
+            flag_s = 0
+            for ch in msg.text:
+                print(ch)
+                if not ch in symbols.chars.keys():
+                    print('OK')
+                    flag_s = 1
+
+            print(msg.from_user.id)
+            if msg.from_user.id in admins and flag_s == 0:
+                await print_string(msg.text)
         except Exception as e:
             print("oops")
 
