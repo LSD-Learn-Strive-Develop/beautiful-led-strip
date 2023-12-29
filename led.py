@@ -40,7 +40,7 @@ look = 0
 pr = 0
 show_item = None
 ny_time = "1/1/24 00:00:00"
-#ny_time = "29/12/23 14:58:00"
+#ny_time = "29/12/23 16:38:00"
 
 last_request = {}
 em = list(symbols.colors.keys())
@@ -222,7 +222,7 @@ def get_countdown():
     minutes %= 60
     print(hours, minutes)
     
-    if hours == 0:
+    if hours == 0 and minutes == 0:
         minutes = str(minutes)
         if len(minutes) < 2:
             minutes = '0' + minutes
@@ -326,7 +326,6 @@ async def timer():
                 await print_current_time()
                 await asyncio.sleep(wait)
 
-            show_item = None
         elif show_item == 3:
             await get_weather()
 
@@ -336,7 +335,7 @@ async def timer():
         elif type(show_item) == str:
             await print_string(msg.text)
         
-        if show_item != None:
+        if show_item != None and show_item != 1:
             show_item = None
             await asyncio.sleep(wait)
 
@@ -366,8 +365,9 @@ async def timer():
             dt = dt_ny - dt_now
             
             if dt_ny > dt_now:
-                if save_countdown != get_countdown() or save_current_color != new_current_color:
+                if show_item == 1 or save_countdown != get_countdown() or save_current_color != new_current_color:
                     print('new color')
+                    show_item = None
                     fast = False
                     if mode == 'fight_fast':
                         fast = True
