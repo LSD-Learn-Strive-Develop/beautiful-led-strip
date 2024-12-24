@@ -243,6 +243,12 @@ def get_countdown():
         #minutes = str(minutes)
         #if len(minutes) < 2:
         #    minutes = '0' + minutes
+        if len(hours) < 2:
+            hours = '000' + hours
+        elif len(hours) < 3:
+            hours = '00' + hours
+        elif len(hours) < 4:
+            hours = '0' + hours
 
         time_str = hours
 
@@ -253,7 +259,7 @@ async def print_countdown(fast):
     global save_countdown
 
     countdown_str = get_countdown()
-    for i in range(4):
+    for i in range(len(countdown_str)):
         await change_symbol_opt(i, int(countdown_str[i]), fast)
 
     save_countdown = countdown_str
