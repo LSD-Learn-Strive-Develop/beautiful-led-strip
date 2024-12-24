@@ -39,7 +39,7 @@ save_current_color = (0, 0, 0)
 look = 0
 pr = 0
 show_item = None
-ny_time = "1/1/24 00:00:00"
+ny_time = "1/1/25 00:00:00"
 #ny_time = "29/12/23 16:38:00"
 
 last_request = {}
@@ -59,7 +59,7 @@ general_kb = builder.as_markup(resize_keyboard=True)
 def get_current_color():
     current_color = (0, 0, 0)
 
-    with open('color.txt', 'r') as f:
+    with open('/home/romanychev/dev/beautiful-led-strip/color.txt', 'r') as f:
         line = f.read()
 
         if len(line):
@@ -70,7 +70,7 @@ def get_current_color():
 
 
 def set_current_color(color):
-    with open('color.txt', 'w') as f:
+    with open('/home/romanychev/dev/beautiful-led-strip/color.txt', 'w') as f:
         f.write(color)
 
 
@@ -91,10 +91,12 @@ async def change_symbol_opt(symbol_number, symbol, fast=False):
         blocks = symbols.nums[symbol]
     elif symbol in symbols.chars:
         blocks = symbols.chars[symbol]
-    elif symbol in symbols.special_chars[symbol]:
+    elif symbol in symbols.special_chars:
         blocks = symbols.special_chars[symbol]
     else:
         print('ops')
+        print(symbol)
+        print(symbols.special_chars[symbol])
         return
 
     for block in blocks:
@@ -128,7 +130,7 @@ async def get_weather():
     print('get_weather')
     try:
         data = []
-        with open('weather.txt', 'r') as f:
+        with open('/home/romanychev/dev/beautiful-led-strip/weather.txt', 'r') as f:
             for line in f:
                 data.append(line)
         last_time = int(data[0])
@@ -155,7 +157,7 @@ async def get_weather():
             last_temp = resp['fact']['temp']
             last_temp = str(last_temp)
 
-            with open('weather.txt', 'w') as f:
+            with open('/home/romanychev/dev/beautiful-led-strip/weather.txt', 'w') as f:
                 f.write(str(time_now) + '\n')
                 f.write(last_temp)
 
@@ -232,16 +234,17 @@ def get_countdown():
             seconds = '0' + seconds
 
         time_str = minutes + seconds
+    elif hours == 0:
+        minutes = str(minutes)
+        time_str = minutes
     else:
         hours = str(hours)
-        if len(hours) < 2:
-            hours = '0' + hours
 
-        minutes = str(minutes)
-        if len(minutes) < 2:
-            minutes = '0' + minutes
+        #minutes = str(minutes)
+        #if len(minutes) < 2:
+        #    minutes = '0' + minutes
 
-        time_str = hours + minutes
+        time_str = hours
 
     return time_str
 
@@ -333,7 +336,7 @@ async def timer():
             await rainbowCycle(2)
 
         elif type(show_item) == str:
-            await print_string(msg.text)
+            await print_string(show_item)
         
         if show_item != None and show_item != 1:
             show_item = None
@@ -419,7 +422,7 @@ async def main_logic(msg):
         col = symbols.rgb[symbols.colors[msg.text]]
         print("rgb", col, col[0])
         current_color = str(col[0]) + ' ' + str(col[1]) + ' ' + str(col[2])
-        with open('color.txt', 'w') as f:
+        with open('/home/romanychev/dev/beautiful-led-strip/color.txt', 'w') as f:
             f.write(current_color)
         #await current_time()
         show_item = 1
@@ -433,14 +436,16 @@ async def main_logic(msg):
         show_item = 3
 
     else:
-        admins = [758017709, 248603604, 356384042, 718868214, 355825999, 446574710, 724536101, 405629002]
+        admins = [666789860, 839982378, 1140559982, 1045138384, 379698720, 5298518984, 758017709, 248603604, 356384042, 718868214, 355825999, 446574710, 724536101, 405629002]
         try:
             flag_s = 0
+            
             for ch in msg.text:
                 print(ch)
-                if not ch in symbols.chars.keys():
+                if not ch in symbols.chars.keys() and not ch in symbols.special_chars.keys():
                     print('OK')
                     flag_s = 1
+            
 
             print(msg.from_user.id)
             if msg.from_user.id in admins and flag_s == 0:
