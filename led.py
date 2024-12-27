@@ -224,33 +224,26 @@ def get_countdown():
     minutes %= 60
     print(hours, minutes)
     
+    time_str = 0
+    
     if hours == 0 and minutes == 0:
-        minutes = str(minutes)
-        if len(minutes) < 2:
-            minutes = '0' + minutes
+        time_str = str(seconds)
 
-        seconds = str(seconds)
-        if len(seconds) < 2:
-            seconds = '0' + seconds
+    elif hour == 0:
+        time_str = str(minutes)
 
-        time_str = minutes + seconds
-    elif hours == 0:
-        minutes = str(minutes)
-        time_str = minutes
     else:
-        hours = str(hours)
+        time_str = str(hours)
 
-        #minutes = str(minutes)
-        #if len(minutes) < 2:
-        #    minutes = '0' + minutes
-        if len(hours) < 2:
-            hours = '000' + hours
-        elif len(hours) < 3:
-            hours = '00' + hours
-        elif len(hours) < 4:
-            hours = '0' + hours
+    time_str = str(time_str)
 
-        time_str = hours
+    if len(time_str) < 2:
+        time_str = "000" + time_str
+    elif len(time_str) < 3:
+        time_str = "00" + time_str
+    elif len(time_str) < 4:
+        time_str = "0" + time_str
+
 
     return time_str
 
@@ -390,7 +383,7 @@ async def timer():
                     wait = 0.5
             else:
                 mode = 'user'
-                await print_string('СПБГУ С НГ!')
+                await print_string('СПБГУ С НОВЫМ ГОДОМ! ХАЛЯВА ПРИДИ!!!')
                 await rainbowCycle(2)
             
         await asyncio.sleep(wait)
