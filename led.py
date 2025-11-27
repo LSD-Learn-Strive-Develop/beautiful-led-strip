@@ -4,9 +4,6 @@ import neopixel
 import time
 import asyncio
 from datetime import datetime
-from multiprocessing import Process, Value
-import subprocess
-import sys
 
 #subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "--pre", "aiogram"])
 print("ok")
@@ -17,7 +14,6 @@ from aiogram import F
 
 from config import TOKEN
 
-import json
 import requests
 from requests.structures import CaseInsensitiveDict
 
@@ -229,7 +225,7 @@ def get_countdown():
     if hours == 0 and minutes == 0:
         time_str = str(seconds)
 
-    elif hour == 0:
+    elif hours == 0:
         time_str = str(minutes)
 
     else:
