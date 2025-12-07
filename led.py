@@ -7,12 +7,6 @@ from datetime import datetime
 
 #subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "--pre", "aiogram"])
 print("ok")
-from aiogram import Bot, types, Dispatcher
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from aiogram.filters.command import Command
-from aiogram import F
-
-from config import TOKEN
 
 import requests
 from requests.structures import CaseInsensitiveDict
@@ -26,9 +20,6 @@ mode = 'main'
 pixels_count = 392
 pixels = neopixel.NeoPixel(board.D18, 392, auto_write=False,)
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
-
 save_time = 0
 save_countdown = 0
 save_current_color = (0, 0, 0)
@@ -39,17 +30,6 @@ ny_time = "1/1/25 00:00:00"
 #ny_time = "29/12/23 16:38:00"
 
 last_request = {}
-em = list(symbols.colors.keys())
-em_kb = [types.KeyboardButton(text=i) for i in em]
-
-builder = ReplyKeyboardBuilder()
-for i in range(9):
-    builder.add(em_kb[i])
-
-builder.add(types.KeyboardButton(text=symbols.rainbow), types.KeyboardButton(text=symbols.temperature))
-
-builder.adjust(3, 3, 3, 2)
-general_kb = builder.as_markup(resize_keyboard=True)
 
 
 def get_current_color():
@@ -381,91 +361,3 @@ async def timer():
                 mode = 'user'
                 await print_string('СПБГУ С НОВЫМ ГОДОМ! ХАЛЯВА ПРИДИ!!!')
                 await rainbowCycle(2)
-            
-        await asyncio.sleep(wait)
-
-
-async def start_bot():
-    asyncio.ensure_future(timer())
-
-
-@dp.message(Command('start'))
-async def process_start_command(message):
-    await message.reply("Привет!\nОтправляй мне эмодзи-сердечки и я буду менять цвет ленты в цвет отправленного сердечка",
-                        reply_markup=general_kb)
-
-
-@dp.message(F.content_type=='text')
-async def main_logic(msg):
-    #print(msg)
-    global current_color
-    global pr
-    global mode
-    global last_request
-    global show_item
-
-    if (msg.from_user.id in last_request) and (time.time() - last_request[msg.from_user.id] < 5.0):
-        await msg.reply("Попробуй позже")
-        return
-
-    last_request[msg.from_user.id] = time.time()
-    
-    if msg.text in ['main', 'user', 'fight']:
-        mode = msg.text
-
-    elif msg.text in symbols.colors.keys():
-        col = symbols.rgb[symbols.colors[msg.text]]
-        print("rgb", col, col[0])
-        current_color = str(col[0]) + ' ' + str(col[1]) + ' ' + str(col[2])
-        with open('/home/romanychev/dev/beautiful-led-strip/color.txt', 'w') as f:
-            f.write(current_color)
-        #await current_time()
-        show_item = 1
-
-    elif msg.text == symbols.rainbow:
-        #await rainbowCycle(2)
-        show_item = 2
-
-    elif msg.text == symbols.temperature:
-        #await get_weather()
-        show_item = 3
-
-    else:
-        admins = [666789860, 839982378, 1140559982, 1045138384, 379698720, 5298518984, 758017709, 248603604, 356384042, 718868214, 355825999, 446574710, 724536101, 405629002]
-        try:
-            flag_s = 0
-            
-            for ch in msg.text:
-                print(ch)
-                if not ch in symbols.chars.keys() and not ch in symbols.special_chars.keys():
-                    print('OK')
-                    flag_s = 1
-            
-
-            print(msg.from_user.id)
-            if msg.from_user.id in admins and flag_s == 0:
-                #await print_string(msg.text)
-                show_item = msg.text
-        except Exception as e:
-            print("oops")
-
-    try:
-        await bot.send_message(248603604, '@' + msg.from_user.username + ' изменил цвет ' + msg.text)
-    except Exception as e:
-        print(e)
-        await bot.send_message(248603604, '@' + msg.from_user.first_name + ' изменил цвет ' + msg.text)
-
-    await msg.answer('Цвет изменен', reply_markup=general_kb)
-
-
-async def st():
-    dp.startup.register(start_bot)
-
-    await dp.start_polling(bot)
-
-
-if __name__ == '__main__':
-    try:
-        asyncio.run(st())
-    except Exception as e:
-        print(e)
