@@ -2,8 +2,9 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 import time
 from bot.keyboards import get_main_kb
-import led
+from admins_reader import admins
 from main import bot
+import led
 import symbols
 
 router = Router()
@@ -41,7 +42,6 @@ async def main_logic(msg: types.Message):
         led.show_item = 3
 
     else:
-        admins = [666789860, 839982378, 1140559982, 1045138384, 379698720, 5298518984, 758017709, 248603604, 356384042, 718868214, 355825999, 446574710, 724536101, 405629002]
         try:
             flag_s = 0
             
