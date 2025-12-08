@@ -46,7 +46,7 @@ def _check_rate_limit(user_id: int) -> bool:
     return True
 
 
-@router.message(F.text)
+@router.message(F.text, ~F.text.startswith("/"))
 async def handle_message(message: Message, app_context: AppContext) -> None:
     """Handle all text messages.
     
