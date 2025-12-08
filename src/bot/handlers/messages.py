@@ -97,7 +97,7 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Text display (admin only)
     if is_displayable(text.upper()):
-        if user_id == app_context.config.telegram.admin_id:
+        if app_context.admin_manager.is_admin(user_id):
             app_context.display_manager.show_text(text.upper())
             await _notify_admin(message, app_context, f"показал текст: {text}")
             await message.answer("Текст отправлен 📝", reply_markup=get_main_keyboard())

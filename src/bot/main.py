@@ -11,6 +11,7 @@ from aiogram.types import TelegramObject
 from src.config import get_config
 from src.led.controller import LEDController
 from src.bot.app import AppContext, ColorStorage, DisplayManager
+from src.bot.admin_manager import AdminManager
 from src.bot.handlers import commands, messages
 
 
@@ -33,6 +34,12 @@ async def create_app_context() -> AppContext:
     # Initialize display manager
     display_manager = DisplayManager(led_controller, config)
     
+    # Initialize admin manager
+    admin_manager = AdminManager(
+        config.data_dir / "admins.txt",
+        config.telegram.admin_id,
+    )
+    
     # Initialize bot
     bot = Bot(token=config.telegram.bot_token)
     
@@ -42,6 +49,7 @@ async def create_app_context() -> AppContext:
         led_controller=led_controller,
         color_storage=color_storage,
         display_manager=display_manager,
+        admin_manager=admin_manager,
     )
 
 

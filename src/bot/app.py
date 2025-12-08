@@ -158,3 +158,8 @@ class AppContext:
     led_controller: LEDController
     color_storage: ColorStorage
     display_manager: DisplayManager
+    admin_manager: "AdminManager"
+
+
+# Import at bottom to avoid circular imports
+from src.bot.admin_manager import AdminManager
