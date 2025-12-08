@@ -15,7 +15,7 @@ from src.led.symbols import (
     EMOJI_TEMPERATURE,
     is_displayable,
 )
-from .keyboards import get_main_keyboard
+from src.bot.keyboards import get_main_keyboard
 
 if TYPE_CHECKING:
     from src.bot.app import AppContext
