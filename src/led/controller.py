@@ -51,6 +51,7 @@ class LEDController:
         self.current_color: tuple[int, int, int] = (0, 0, 0)
         self.rainbow_mode: bool = False
         self._rainbow_offset: int = 0  # For animation
+        self._lit_pixels: set = set()  # Track which pixels are currently lit
     
     def set_color(self, rgb: tuple[int, int, int]) -> None:
         """Set the current display color.
@@ -124,6 +125,7 @@ class LEDController:
         # Clear the position first
         for i in range(offset, offset + self.config.pixels_per_symbol):
             self.pixels[i] = (0, 0, 0)
+            self._lit_pixels.discard(i)  # Remove from lit set
         self.pixels.show()
         
         # Draw each block (segment)
@@ -173,6 +175,7 @@ class LEDController:
             else:
                 color = self.current_color
             self.pixels[pixel_index] = color
+            self._lit_pixels.add(pixel_index)  # Track this pixel as lit
             if not fast:
                 self.pixels.show()
     
@@ -217,16 +220,13 @@ class LEDController:
         """Update colors of all currently lit pixels without redrawing structure.
         
         Used for smooth rainbow animation without flickering.
-        Only updates non-black pixels.
+        Only updates pixels tracked in _lit_pixels set.
         """
-        for i in range(self.config.count):
-            # Check if pixel is currently lit (not black)
-            current = self.pixels[i]
-            if current != (0, 0, 0):
-                if self.rainbow_mode:
-                    self.pixels[i] = self._get_rainbow_color(i)
-                else:
-                    self.pixels[i] = self.current_color
+        for pixel_index in self._lit_pixels:
+            if self.rainbow_mode:
+                self.pixels[pixel_index] = self._get_rainbow_color(pixel_index)
+            else:
+                self.pixels[pixel_index] = self.current_color
         
         self.pixels.show()
 
