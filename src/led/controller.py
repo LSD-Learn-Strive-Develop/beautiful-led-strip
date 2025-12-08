@@ -212,6 +212,24 @@ class LEDController:
                 symbol = char
             
             await self.show_symbol(i, symbol, fast)
+    
+    def update_colors(self) -> None:
+        """Update colors of all currently lit pixels without redrawing structure.
+        
+        Used for smooth rainbow animation without flickering.
+        Only updates non-black pixels.
+        """
+        for i in range(self.config.count):
+            # Check if pixel is currently lit (not black)
+            current = self.pixels[i]
+            if current != (0, 0, 0):
+                if self.rainbow_mode:
+                    self.pixels[i] = self._get_rainbow_color(i)
+                else:
+                    self.pixels[i] = self.current_color
+        
+        self.pixels.show()
+
 
 
 async def wheel(position: int) -> tuple[int, int, int]:

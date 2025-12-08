@@ -108,16 +108,17 @@ async def run_display_loop(app_context: AppContext) -> None:
         # Rainbow animation: 5 seconds of cycling when first enabled
         if rainbow_changed and led.rainbow_mode:
             import time as time_module
+            
+            # First, draw the time to set up which pixels are lit
+            await time_display.show_current_time(fast=True)
+            
             animation_start = time_module.time()
             animation_duration = 5.0  # seconds
             
             while time_module.time() - animation_start < animation_duration:
-                # Redraw time with current rainbow offset (changes with time)
-                await time_display.show_current_time(fast=True)
-                await asyncio.sleep(0.05)  # ~20 FPS
-            
-            # Final draw after animation
-            await time_display.show_current_time()
+                # Just update colors of already-lit pixels (smooth, no flicker)
+                led.update_colors()
+                await asyncio.sleep(0.03)  # ~30 FPS
         
         if dm.mode.name == "MAIN":
             if time_changed:
