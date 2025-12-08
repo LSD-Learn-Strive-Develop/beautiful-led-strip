@@ -71,6 +71,7 @@ class DisplayManager:
         self._mode = DisplayMode.MAIN
         self._pending_action: Optional[str] = None
         self._pending_text: Optional[str] = None
+        self._rainbow_mode: bool = False
     
     @property
     def mode(self) -> DisplayMode:
@@ -94,8 +95,18 @@ class DisplayManager:
         self._pending_action = "refresh"
     
     def show_rainbow(self) -> None:
-        """Request rainbow effect."""
-        self._pending_action = "rainbow"
+        """Toggle rainbow color mode."""
+        self._rainbow_mode = not self._rainbow_mode
+        self._pending_action = "refresh"
+    
+    @property
+    def rainbow_mode(self) -> bool:
+        """Check if rainbow mode is active."""
+        return self._rainbow_mode
+    
+    def disable_rainbow(self) -> None:
+        """Disable rainbow mode (when user sets a color)."""
+        self._rainbow_mode = False
     
     def show_temperature(self) -> None:
         """Request temperature display."""

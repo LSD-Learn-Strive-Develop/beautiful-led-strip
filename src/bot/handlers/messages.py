@@ -74,6 +74,7 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
         color_name = COLORS[text]
         rgb = RGB_COLORS[color_name]
         
+        app_context.display_manager.disable_rainbow()  # Turn off rainbow mode
         app_context.led_controller.set_color(rgb)
         app_context.color_storage.save_color(rgb)
         app_context.display_manager.request_refresh()

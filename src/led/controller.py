@@ -6,7 +6,8 @@ Provides high-level interface for controlling LED strip display.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+import time
+from typing import TYPE_CHECKING, Tuple
 
 from .symbols import get_symbol_definition, SymbolDef
 
@@ -48,6 +49,8 @@ class LEDController:
         )
         
         self.current_color: tuple[int, int, int] = (0, 0, 0)
+        self.rainbow_mode: bool = False
+        self._rainbow_offset: int = 0  # For animation
     
     def set_color(self, rgb: tuple[int, int, int]) -> None:
         """Set the current display color.
@@ -56,6 +59,28 @@ class LEDController:
             rgb: Color as (red, green, blue) tuple, values 0-255
         """
         self.current_color = rgb
+    
+    def _get_rainbow_color(self, pixel_index: int) -> Tuple[int, int, int]:
+        """Get rainbow color for a specific pixel.
+        
+        Args:
+            pixel_index: Index of the pixel in the strip
+            
+        Returns:
+            RGB color tuple
+        """
+        # Use time-based offset for subtle animation
+        offset = int(time.time() * 50) % 256
+        position = (int(pixel_index * 256 / self.config.count) + offset) & 255
+        
+        if position < 85:
+            return (position * 3, 255 - position * 3, 0)
+        elif position < 170:
+            position -= 85
+            return (255 - position * 3, 0, position * 3)
+        else:
+            position -= 170
+            return (0, position * 3, 255 - position * 3)
     
     def clear(self) -> None:
         """Turn off all pixels."""
@@ -142,7 +167,12 @@ class LEDController:
         segment_offset = offset + self.config.leds_per_segment * (segment - 1)
         
         for j in range(start, end, step):
-            self.pixels[segment_offset + j] = self.current_color
+            pixel_index = segment_offset + j
+            if self.rainbow_mode:
+                color = self._get_rainbow_color(pixel_index)
+            else:
+                color = self.current_color
+            self.pixels[pixel_index] = color
             if not fast:
                 self.pixels.show()
     

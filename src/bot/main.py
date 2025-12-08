@@ -68,9 +68,13 @@ async def run_display_loop(app_context: AppContext) -> None:
     )
     
     last_color = led.current_color
+    last_rainbow_mode = False
     
     while True:
         wait_time = 5.0 if dm.mode.name in ("MAIN", "USER", "FIGHT") else 0.5
+        
+        # Sync rainbow mode from display manager to LED controller
+        led.rainbow_mode = dm.rainbow_mode
         
         # Check for pending text
         pending_text = dm.get_pending_text()
@@ -81,11 +85,7 @@ async def run_display_loop(app_context: AppContext) -> None:
         
         # Check for pending actions
         pending_action = dm.get_pending_action()
-        if pending_action == "rainbow":
-            await rainbow_cycle(led)
-            await asyncio.sleep(wait_time)
-            continue
-        elif pending_action == "temperature":
+        if pending_action == "temperature":
             temp_str = weather_service.get_temperature_display()
             await text_display.show_static_text(temp_str)
             await asyncio.sleep(wait_time)
@@ -94,20 +94,25 @@ async def run_display_loop(app_context: AppContext) -> None:
         # Mode-specific behavior
         current_color = led.current_color
         color_changed = current_color != last_color
+        rainbow_changed = led.rainbow_mode != last_rainbow_mode
+        time_changed = time_display.time_changed()
         
         if dm.mode.name == "MAIN":
-            if time_display.time_changed() or color_changed or pending_action == "refresh":
-                # Show weather
+            if time_changed:
+                # New minute: show weather, then time
                 temp_str = weather_service.get_temperature_display()
                 await text_display.show_static_text(temp_str)
                 await asyncio.sleep(5)
                 
-                # Show time
                 await time_display.show_current_time()
                 await asyncio.sleep(5)
+            elif color_changed or rainbow_changed or pending_action == "refresh":
+                # Color or rainbow mode changed: just redraw time
+                await time_display.show_current_time()
         
         elif dm.mode.name == "USER":
-            if color_changed:
+            if time_changed:
+                # New minute: show weather, greeting, then time
                 temp_str = weather_service.get_temperature_display()
                 await text_display.show_static_text(temp_str)
                 await asyncio.sleep(5)
@@ -116,6 +121,9 @@ async def run_display_loop(app_context: AppContext) -> None:
                 
                 await time_display.show_current_time()
                 await asyncio.sleep(5)
+            elif color_changed or rainbow_changed:
+                # Color or rainbow mode changed: just redraw time
+                await time_display.show_current_time()
         
         elif dm.mode.name in ("FIGHT", "FIGHT_FAST"):
             if countdown_display.is_complete():
@@ -124,7 +132,7 @@ async def run_display_loop(app_context: AppContext) -> None:
                 await text_display.show_scrolling_text("С НОВЫМ ГОДОМ! 🎉")
                 await rainbow_cycle(led)
             else:
-                if countdown_display.value_changed() or color_changed or pending_action == "refresh":
+                if countdown_display.value_changed() or color_changed or rainbow_changed or pending_action == "refresh":
                     fast = dm.mode.name == "FIGHT_FAST"
                     await countdown_display.show_countdown(fast)
                 
@@ -132,6 +140,7 @@ async def run_display_loop(app_context: AppContext) -> None:
                     dm.enter_fast_mode()
         
         last_color = current_color
+        last_rainbow_mode = led.rainbow_mode
         await asyncio.sleep(0.1)  # Small delay to prevent tight loop
 
 
