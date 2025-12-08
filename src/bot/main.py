@@ -97,6 +97,20 @@ async def run_display_loop(app_context: AppContext) -> None:
         rainbow_changed = led.rainbow_mode != last_rainbow_mode
         time_changed = time_display.time_changed()
         
+        # Rainbow animation: 5 seconds of cycling when first enabled
+        if rainbow_changed and led.rainbow_mode:
+            import time as time_module
+            animation_start = time_module.time()
+            animation_duration = 5.0  # seconds
+            
+            while time_module.time() - animation_start < animation_duration:
+                # Redraw time with current rainbow offset (changes with time)
+                await time_display.show_current_time(fast=True)
+                await asyncio.sleep(0.05)  # ~20 FPS
+            
+            # Final draw after animation
+            await time_display.show_current_time()
+        
         if dm.mode.name == "MAIN":
             if time_changed:
                 # New minute: show weather, then time
