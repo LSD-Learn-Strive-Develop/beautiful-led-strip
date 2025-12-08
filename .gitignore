@@ -1,4 +1,19 @@
-config.py
+# Old config (kept for backward compatibility on production)
+bot/config.py
+
+# Secrets
+.env
+
+# Data files (runtime state)
+data/color.txt
+data/weather.txt
+
+# IDE
 .idea/
 .vscode/
+
+# Python
 __pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
