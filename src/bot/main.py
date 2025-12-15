@@ -152,7 +152,13 @@ async def run_display_loop(app_context: AppContext) -> None:
                 await text_display.show_static_text(temp_str)
                 await asyncio.sleep(5)
                 
+                # Enable rainbow mode for greeting text
+                dm.enable_rainbow()
+                led.rainbow_mode = True  # Set immediately for text display
                 await text_display.show_scrolling_text("С НОВЫМ ГОДОМ")
+                # Disable rainbow mode after text display
+                dm.disable_rainbow()
+                led.rainbow_mode = False  # Set immediately for time display
                 
                 await time_display.show_current_time()
                 await asyncio.sleep(5)
@@ -164,7 +170,11 @@ async def run_display_loop(app_context: AppContext) -> None:
             if countdown_display.is_complete():
                 # Countdown finished!
                 dm.exit_countdown()
-                await text_display.show_scrolling_text("С НОВЫМ ГОДОМ! 🎉")
+                # Enable rainbow mode for greeting text
+                dm.enable_rainbow()
+                led.rainbow_mode = True
+                await text_display.show_scrolling_text("ПУНК! С НОВЫМ ГОДОМ!!!")
+                # Keep rainbow mode enabled for rainbow cycle
                 await rainbow_cycle(led)
             else:
                 if countdown_display.value_changed() or color_changed or rainbow_changed or pending_action == "refresh":

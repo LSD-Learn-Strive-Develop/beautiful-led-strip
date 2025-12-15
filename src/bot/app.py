@@ -105,6 +105,10 @@ class DisplayManager:
         """Check if rainbow mode is active."""
         return self._rainbow_mode
     
+    def enable_rainbow(self) -> None:
+        """Enable rainbow color mode."""
+        self._rainbow_mode = True
+    
     def disable_rainbow(self) -> None:
         """Disable rainbow mode (when user sets a color)."""
         self._rainbow_mode = False
