@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
@@ -148,6 +149,21 @@ class DisplayManager:
     def exit_countdown(self) -> None:
         """Exit countdown mode after completion."""
         self._mode = DisplayMode.USER
+    
+    def get_random_color_from_existing(self) -> tuple[int, int, int]:
+        """Get a random color from existing colors (excluding black).
+        
+        Returns:
+            Random RGB tuple from existing colors
+        """
+        from src.led.symbols import RGB_COLORS
+        
+        # Get all colors except black
+        available_colors = [
+            rgb for name, rgb in RGB_COLORS.items() if name != "Черный"
+        ]
+        
+        return random.choice(available_colors)
 
 
 @dataclass

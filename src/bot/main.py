@@ -122,6 +122,12 @@ async def run_display_loop(app_context: AppContext) -> None:
         
         if dm.mode.name == "MAIN":
             if time_changed:
+                # Check if current color is black and replace with random existing color
+                if led.current_color == (0, 0, 0):
+                    random_color = dm.get_random_color_from_existing()
+                    led.set_color(random_color)
+                    app_context.color_storage.save_color(random_color)
+                
                 # New minute: show weather, then time
                 temp_str = weather_service.get_temperature_display()
                 await text_display.show_static_text(temp_str)
@@ -135,6 +141,12 @@ async def run_display_loop(app_context: AppContext) -> None:
         
         elif dm.mode.name == "USER":
             if time_changed:
+                # Check if current color is black and replace with random existing color
+                if led.current_color == (0, 0, 0):
+                    random_color = dm.get_random_color_from_existing()
+                    led.set_color(random_color)
+                    app_context.color_storage.save_color(random_color)
+                
                 # New minute: show weather, greeting, then time
                 temp_str = weather_service.get_temperature_display()
                 await text_display.show_static_text(temp_str)
