@@ -63,10 +63,16 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
         await message.reply("Попробуй позже ⏳")
         return
     
-    # Mode commands
+    # Mode commands (admin only)
     if text in ("main", "user", "fight"):
-        app_context.display_manager.set_mode(text)
-        await message.answer(f"Режим: {text}", reply_markup=get_main_keyboard())
+        if app_context.admin_manager.is_admin(user_id):
+            app_context.display_manager.set_mode(text)
+            await message.answer(f"Режим: {text}", reply_markup=get_main_keyboard())
+        else:
+            await message.answer(
+                "Смена режима доступна только администраторам",
+                reply_markup=get_main_keyboard(),
+            )
         return
     
     # Color change via emoji
