@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import random
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -73,6 +74,7 @@ class DisplayManager:
         self._pending_action: Optional[str] = None
         self._pending_text: Optional[str] = None
         self._rainbow_mode: bool = False
+        self._new_year_date: datetime = config.new_year_date
     
     @property
     def mode(self) -> DisplayMode:
@@ -168,6 +170,19 @@ class DisplayManager:
         ]
         
         return random.choice(available_colors)
+    
+    @property
+    def new_year_date(self) -> datetime:
+        """Get current New Year date."""
+        return self._new_year_date
+    
+    def set_new_year_date(self, date: datetime) -> None:
+        """Set New Year date.
+        
+        Args:
+            date: New target datetime
+        """
+        self._new_year_date = date
 
 
 @dataclass

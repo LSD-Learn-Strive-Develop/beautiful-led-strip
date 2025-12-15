@@ -29,6 +29,15 @@ class CountdownDisplay:
         self.target_date = target_date
         self._last_value: str = ""
     
+    def set_target_date(self, target_date: datetime) -> None:
+        """Update target date for countdown.
+        
+        Args:
+            target_date: New target datetime
+        """
+        self.target_date = target_date
+        self._last_value = ""  # Reset last value to force update
+    
     @property
     def last_displayed_value(self) -> str:
         """Get the last displayed countdown value."""

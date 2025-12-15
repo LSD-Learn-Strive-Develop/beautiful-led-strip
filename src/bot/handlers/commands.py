@@ -43,6 +43,13 @@ async def cmd_help(message: Message, app_context: "AppContext") -> None:
         "или напиши текст (только для админов)."
     )
     
+    # Add admin commands for admins
+    if app_context.admin_manager.is_admin(user_id):
+        help_text += (
+            "\n\n👑 Команды админа:\n"
+            "/set_new_year_date <YYYY-MM-DD HH:MM:SS> — установить дату Нового года"
+        )
+    
     # Add admin commands for super admin
     if app_context.admin_manager.is_super_admin(user_id):
         help_text += (
@@ -143,4 +150,46 @@ async def cmd_list_admins(message: Message, app_context: "AppContext") -> None:
         await message.reply(f"👥 Список админов:\n\n{admin_list}")
     else:
         await message.reply("ℹ️ Список админов пуст (кроме супер-админа)")
+
+
+@router.message(Command("set_new_year_date"))
+async def cmd_set_new_year_date(message: Message, app_context: "AppContext") -> None:
+    """Handle /set_new_year_date command. Admin only."""
+    if not message.from_user:
+        return
+    
+    user_id = message.from_user.id
+    
+    # Check if admin
+    if not app_context.admin_manager.is_admin(user_id):
+        await message.reply("⛔ Только администраторы могут изменять дату Нового года")
+        return
+    
+    # Parse argument
+    args = message.text.split(maxsplit=1) if message.text else []
+    if len(args) < 2:
+        await message.reply(
+            "Использование: /set_new_year_date <YYYY-MM-DD HH:MM:SS>\n\n"
+            "Пример: /set_new_year_date 2026-01-01 00:00:00"
+        )
+        return
+    
+    try:
+        from datetime import datetime
+        new_date = datetime.strptime(args[1], "%Y-%m-%d %H:%M:%S")
+        
+        # Set new date in display manager
+        app_context.display_manager.set_new_year_date(new_date)
+        
+        date_str = new_date.strftime("%Y-%m-%d %H:%M:%S")
+        await message.reply(
+            f"✅ Дата Нового года установлена: {date_str}\n\n"
+            "Изменения применятся автоматически в следующей итерации цикла."
+        )
+    except ValueError as e:
+        await message.reply(
+            f"❌ Неверный формат даты.\n\n"
+            "Используйте формат: YYYY-MM-DD HH:MM:SS\n"
+            "Пример: 2026-01-01 00:00:00"
+        )
 

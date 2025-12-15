@@ -68,7 +68,7 @@ async def run_display_loop(app_context: AppContext) -> None:
     
     # Initialize display modules
     time_display = TimeDisplay(led)
-    countdown_display = CountdownDisplay(led, config.new_year_date)
+    countdown_display = CountdownDisplay(led, dm.new_year_date)
     text_display = TextDisplay(led)
     weather_service = WeatherService(
         config.weather,
@@ -77,9 +77,15 @@ async def run_display_loop(app_context: AppContext) -> None:
     
     last_color = led.current_color
     last_rainbow_mode = False
+    last_new_year_date = dm.new_year_date
     
     while True:
         wait_time = 5.0 if dm.mode.name in ("MAIN", "USER", "FIGHT") else 0.5
+        
+        # Check if New Year date was updated
+        if dm.new_year_date != last_new_year_date:
+            countdown_display.set_target_date(dm.new_year_date)
+            last_new_year_date = dm.new_year_date
         
         # Sync rainbow mode from display manager to LED controller
         led.rainbow_mode = dm.rainbow_mode
