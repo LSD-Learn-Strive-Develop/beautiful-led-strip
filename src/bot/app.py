@@ -154,7 +154,7 @@ class DisplayManager:
     
     def exit_countdown(self) -> None:
         """Exit countdown mode after completion."""
-        self._mode = DisplayMode.USER
+        self._mode = DisplayMode.MAIN
     
     def get_random_color_from_existing(self) -> tuple[int, int, int]:
         """Get a random color from existing colors (excluding black).
