@@ -75,6 +75,7 @@ class DisplayManager:
         self._pending_text: Optional[str] = None
         self._pending_slots: Optional[int] = None  # Dice value for slot machine
         self._slots_active: bool = False  # True while slots animation is running
+        self._display_busy: bool = False  # True while any animation is running
         self._rainbow_mode: bool = False
         self._new_year_date: datetime = config.new_year_date
     
@@ -158,6 +159,19 @@ class DisplayManager:
             active: True when animation starts, False when it ends
         """
         self._slots_active = active
+    
+    @property
+    def display_busy(self) -> bool:
+        """Check if display is busy with any animation."""
+        return self._display_busy or self._slots_active
+    
+    def set_display_busy(self, busy: bool) -> None:
+        """Set display busy state.
+        
+        Args:
+            busy: True when animation starts, False when it ends
+        """
+        self._display_busy = busy
     
     def get_pending_action(self) -> Optional[str]:
         """Get and clear pending action.

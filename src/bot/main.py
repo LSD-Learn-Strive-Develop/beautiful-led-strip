@@ -108,16 +108,24 @@ async def run_display_loop(app_context: AppContext) -> None:
         # Check for pending text
         pending_text = dm.get_pending_text()
         if pending_text:
-            await text_display.show_scrolling_text(pending_text)
-            await asyncio.sleep(wait_time)
+            dm.set_display_busy(True)
+            try:
+                await text_display.show_scrolling_text(pending_text)
+                await asyncio.sleep(wait_time)
+            finally:
+                dm.set_display_busy(False)
             continue
         
         # Check for pending actions
         pending_action = dm.get_pending_action()
         if pending_action == "temperature":
-            temp_str = weather_service.get_temperature_display()
-            await text_display.show_static_text(temp_str)
-            await asyncio.sleep(wait_time)
+            dm.set_display_busy(True)
+            try:
+                temp_str = weather_service.get_temperature_display()
+                await text_display.show_static_text(temp_str)
+                await asyncio.sleep(wait_time)
+            finally:
+                dm.set_display_busy(False)
             continue
         
         # Mode-specific behavior

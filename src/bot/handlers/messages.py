@@ -68,6 +68,11 @@ async def handle_dice(message: Message, app_context: AppContext) -> None:
             await message.reply("🎄 Обратный отсчёт! Подожди немного...")
             return
     
+    # Block if display is busy with another animation
+    if app_context.display_manager.display_busy:
+        await message.reply("Подожди пару секунд ⏳")
+        return
+    
     # Rate limiting
     if not _check_rate_limit(user_id):
         await message.reply("Попробуй позже ⏳")
@@ -143,15 +148,18 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Temperature display
     if text == EMOJI_TEMPERATURE:
+        if app_context.display_manager.display_busy:
+            await message.reply("Подожди пару секунд ⏳")
+            return
         app_context.display_manager.show_temperature()
         await message.answer("🌡", reply_markup=get_main_keyboard())
         return
     
     # Slot machine - send dice and show on LED
     if text == EMOJI_SLOTS:
-        # Check if slots already running
-        if app_context.display_manager.slots_active:
-            await message.reply("Подожди, слоты ещё крутятся! 🎰")
+        # Check if display is busy
+        if app_context.display_manager.display_busy:
+            await message.reply("Подожди пару секунд ⏳")
             return
         
         # Send dice and get the result
@@ -167,6 +175,9 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Text display (admin only)
     if is_displayable(text.upper()):
+        if app_context.display_manager.display_busy:
+            await message.reply("Подожди пару секунд ⏳")
+            return
         if is_admin:
             app_context.display_manager.show_text(text.upper())
             await _notify_admin(message, app_context, f"показал текст: {text}")
