@@ -9,7 +9,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Tuple
 
-from .symbols import get_symbol_definition, SymbolDef
+from .symbols import get_symbol_definition, get_slot_symbol_definition, SymbolDef, RGB_COLORS
 
 if TYPE_CHECKING:
     from src.config import LEDConfig
@@ -140,6 +140,7 @@ class LEDController:
         offset: int,
         block: list[int],
         fast: bool,
+        override_color: tuple[int, int, int] | None = None,
     ) -> None:
         """Draw a single segment block.
         
@@ -147,6 +148,7 @@ class LEDController:
             offset: Starting pixel offset for the symbol position
             block: Block definition [segment, direction, start?, end?]
             fast: If True, don't show updates between pixels
+            override_color: Optional color to use instead of current_color
         """
         segment = block[0]
         direction = block[1]
@@ -170,7 +172,9 @@ class LEDController:
         
         for j in range(start, end, step):
             pixel_index = segment_offset + j
-            if self.rainbow_mode:
+            if override_color:
+                color = override_color
+            elif self.rainbow_mode:
                 color = self._get_rainbow_color(pixel_index)
             else:
                 color = self.current_color
@@ -179,6 +183,64 @@ class LEDController:
             if not fast:
                 self.pixels.show()
     
+    async def show_slot_symbol(
+        self,
+        position: int,
+        slot_name: str,
+        fast: bool = False,
+    ) -> None:
+        """Display a slot machine symbol at the specified position.
+        
+        Each slot symbol has its own colors defined in SLOT_SYMBOLS.
+        
+        Args:
+            position: Display position (0-3, where 0 is rightmost)
+            slot_name: Slot symbol name ('bar', 'grapes', 'lemon', 'seven')
+            fast: If True, update display at once; otherwise animate
+        """
+        colored_blocks = get_slot_symbol_definition(slot_name)
+        if colored_blocks is None:
+            print(f"Unknown slot symbol: {slot_name}")
+            return
+        
+        offset = self._get_symbol_offset(position)
+        
+        # Clear the position first
+        for i in range(offset, offset + self.config.pixels_per_symbol):
+            self.pixels[i] = (0, 0, 0)
+            self._lit_pixels.discard(i)
+        self.pixels.show()
+        
+        # Draw each colored block
+        for colored_block in colored_blocks:
+            # Parse colored block: (segment, direction, color) or (segment, direction, start, end, color)
+            if len(colored_block) == 3:
+                segment, direction, color_name = colored_block
+                block = [segment, direction]
+            else:
+                segment, direction, start, end, color_name = colored_block
+                block = [segment, direction, start, end]
+            
+            # Get RGB color from color name
+            rgb_color = RGB_COLORS.get(color_name, (255, 255, 255))
+            
+            await self._draw_block(offset, block, fast, override_color=rgb_color)
+        
+        if fast:
+            self.pixels.show()
+    
+    def clear_position(self, position: int) -> None:
+        """Clear a single display position.
+        
+        Args:
+            position: Display position to clear (0-3)
+        """
+        offset = self._get_symbol_offset(position)
+        for i in range(offset, offset + self.config.pixels_per_symbol):
+            self.pixels[i] = (0, 0, 0)
+            self._lit_pixels.discard(i)
+        self.pixels.show()
+
     async def show_text(self, text: str, scroll_delay: float = 0.7) -> None:
         """Display scrolling text.
         

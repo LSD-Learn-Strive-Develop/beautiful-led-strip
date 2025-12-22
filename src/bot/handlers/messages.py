@@ -46,6 +46,39 @@ def _check_rate_limit(user_id: int) -> bool:
     return True
 
 
+@router.message(F.dice)
+async def handle_dice(message: Message, app_context: AppContext) -> None:
+    """Handle dice/slot machine stickers.
+    
+    Shows slot machine results on LED display when receiving the 🎰 sticker.
+    """
+    if not message.dice or not message.from_user:
+        return
+    
+    # Only handle slot machine emoji
+    if message.dice.emoji != "🎰":
+        return
+    
+    user_id = message.from_user.id
+    
+    # Rate limiting
+    if not _check_rate_limit(user_id):
+        await message.reply("Попробуй позже ⏳")
+        return
+    
+    dice_value = message.dice.value
+    
+    # Display slot machine on LED (returns False if already running)
+    if not app_context.display_manager.show_slots(dice_value):
+        await message.reply("Подожди, слоты ещё крутятся! 🎰")
+        return
+    
+    # Notify about jackpot
+    from src.led.symbols import is_slot_jackpot
+    if is_slot_jackpot(dice_value):
+        await message.reply("ДЖЕКПОТ!")
+
+
 @router.message(F.text, ~F.text.startswith("/"))
 async def handle_message(message: Message, app_context: AppContext) -> None:
     """Handle all text messages.

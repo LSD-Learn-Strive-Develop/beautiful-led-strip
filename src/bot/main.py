@@ -56,9 +56,9 @@ async def create_app_context() -> AppContext:
 async def run_display_loop(app_context: AppContext) -> None:
     """Main display update loop.
     
-    Handles time display, weather, countdown, and pending actions.
+    Handles time display, weather, countdown, slots, and pending actions.
     """
-    from src.display import TimeDisplay, CountdownDisplay, TextDisplay
+    from src.display import TimeDisplay, CountdownDisplay, TextDisplay, SlotsDisplay
     from src.services import WeatherService
     from src.led.effects import rainbow_cycle
     
@@ -70,6 +70,7 @@ async def run_display_loop(app_context: AppContext) -> None:
     time_display = TimeDisplay(led)
     countdown_display = CountdownDisplay(led, dm.new_year_date)
     text_display = TextDisplay(led)
+    slots_display = SlotsDisplay(led)
     weather_service = WeatherService(
         config.weather,
         config.data_dir / "weather.txt",
@@ -89,6 +90,20 @@ async def run_display_loop(app_context: AppContext) -> None:
         
         # Sync rainbow mode from display manager to LED controller
         led.rainbow_mode = dm.rainbow_mode
+        
+        # Check for pending slots (highest priority)
+        pending_slots = dm.get_pending_slots()
+        if pending_slots:
+            dm.set_slots_active(True)
+            try:
+                is_jackpot = await slots_display.show_slots(pending_slots)
+                # Wait a bit to show the result before continuing
+                await asyncio.sleep(2.0)
+            finally:
+                dm.set_slots_active(False)
+            # Force refresh to return to normal display
+            dm.request_refresh()
+            continue
         
         # Check for pending text
         pending_text = dm.get_pending_text()
