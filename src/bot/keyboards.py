@@ -3,7 +3,7 @@
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types import ReplyKeyboardMarkup
 
-from src.led.symbols import COLORS, EMOJI_RAINBOW, EMOJI_TEMPERATURE
+from src.led.symbols import COLORS, EMOJI_RAINBOW, EMOJI_TEMPERATURE, EMOJI_SLOTS
 
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
@@ -18,11 +18,12 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
     for emoji in COLORS.keys():
         builder.button(text=emoji)
     
-    # Add action buttons
-    builder.button(text=EMOJI_RAINBOW)
+    # Add action buttons (temperature, rainbow, slots)
     builder.button(text=EMOJI_TEMPERATURE)
+    builder.button(text=EMOJI_RAINBOW)
+    builder.button(text=EMOJI_SLOTS)
     
-    # Layout: 3 columns for colors, 2 for actions
-    builder.adjust(3, 3, 3, 2)
+    # Layout: 3 columns for colors, 3 for actions
+    builder.adjust(3, 3, 3, 3)
     
     return builder.as_markup(resize_keyboard=True)

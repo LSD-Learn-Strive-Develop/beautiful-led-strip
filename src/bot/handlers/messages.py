@@ -13,6 +13,7 @@ from src.led.symbols import (
     RGB_COLORS,
     EMOJI_RAINBOW,
     EMOJI_TEMPERATURE,
+    EMOJI_SLOTS,
     is_displayable,
 )
 from src.bot.keyboards import get_main_keyboard
@@ -144,6 +145,24 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     if text == EMOJI_TEMPERATURE:
         app_context.display_manager.show_temperature()
         await message.answer("🌡", reply_markup=get_main_keyboard())
+        return
+    
+    # Slot machine - send dice and show on LED
+    if text == EMOJI_SLOTS:
+        # Check if slots already running
+        if app_context.display_manager.slots_active:
+            await message.reply("Подожди, слоты ещё крутятся! 🎰")
+            return
+        
+        # Send dice and get the result
+        dice_message = await message.answer_dice(emoji="🎰")
+        dice_value = dice_message.dice.value
+        
+        # Display on LED
+        if app_context.display_manager.show_slots(dice_value):
+            from src.led.symbols import is_slot_jackpot
+            if is_slot_jackpot(dice_value):
+                await message.reply("ДЖЕКПОТ!")
         return
     
     # Text display (admin only)

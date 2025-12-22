@@ -41,6 +41,7 @@ COLORS: dict[str, str] = {
 # Special action emojis
 EMOJI_RAINBOW = "🌈"
 EMOJI_TEMPERATURE = "🌡"
+EMOJI_SLOTS = "🎰"
 
 # Color name to RGB mapping
 # Note: Values may be adjusted for specific LED hardware
