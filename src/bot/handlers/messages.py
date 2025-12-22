@@ -61,6 +61,12 @@ async def handle_dice(message: Message, app_context: AppContext) -> None:
     
     user_id = message.from_user.id
     
+    # Block during countdown final minute (except admins)
+    if app_context.display_manager.is_countdown_protected():
+        if not app_context.admin_manager.is_admin(user_id):
+            await message.reply("🎄 Обратный отсчёт! Подожди немного...")
+            return
+    
     # Rate limiting
     if not _check_rate_limit(user_id):
         await message.reply("Попробуй позже ⏳")
@@ -90,6 +96,12 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     user_id = message.from_user.id
     text = message.text
+    is_admin = app_context.admin_manager.is_admin(user_id)
+    
+    # Block during countdown final minute (except admins)
+    if app_context.display_manager.is_countdown_protected() and not is_admin:
+        await message.reply("🎄 Обратный отсчёт! Подожди немного...")
+        return
     
     # Rate limiting
     if not _check_rate_limit(user_id):
@@ -98,7 +110,7 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Mode commands (admin only)
     if text in ("main", "user", "fight"):
-        if app_context.admin_manager.is_admin(user_id):
+        if is_admin:
             app_context.display_manager.set_mode(text)
             await message.answer(f"Режим: {text}", reply_markup=get_main_keyboard())
         else:
@@ -136,7 +148,7 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Text display (admin only)
     if is_displayable(text.upper()):
-        if app_context.admin_manager.is_admin(user_id):
+        if is_admin:
             app_context.display_manager.show_text(text.upper())
             await _notify_admin(message, app_context, f"показал текст: {text}")
             await message.answer("Текст отправлен 📝", reply_markup=get_main_keyboard())

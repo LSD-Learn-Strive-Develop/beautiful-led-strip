@@ -198,6 +198,16 @@ class DisplayManager:
         """Exit countdown mode after completion."""
         self._mode = DisplayMode.MAIN
     
+    def is_countdown_protected(self) -> bool:
+        """Check if countdown is in protected mode (final minute or fast mode).
+        
+        During protected mode, only admins can interact with the display.
+        
+        Returns:
+            True if in FIGHT_FAST mode (last minute before New Year)
+        """
+        return self._mode == DisplayMode.FIGHT_FAST
+    
     def get_random_color_from_existing(self) -> tuple[int, int, int]:
         """Get a random color from existing colors (excluding black).
         
