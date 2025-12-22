@@ -177,13 +177,13 @@ SLOT_SYMBOLS: dict[str, ColoredSymbolDef] = {
     # BAR - White color, letter B shape
     # Using standard B definition: all segments lit
     "bar": [
-        (1, 0, "Белый"),
-        (2, 0, "Белый"),
-        (3, 0, "Белый"),
-        (4, 0, "Белый"),
-        (5, 0, "Белый"),
-        (6, 0, "Белый"),
-        (7, 0, "Белый"),
+        (4, 1, "Белый"),
+        (3, 1, "Белый"),
+        (2, 1, 0, 7, "Белый"),
+        (1, 1, 6, 9, "Белый"),
+        (7, 0, 8, 14, "Белый"),
+        (6, 1, 12, 14, "Белый"),
+        (5, 1, 7, 14, "Белый"),
     ],
     
     # Lemon - Yellow body with green stem
@@ -194,8 +194,7 @@ SLOT_SYMBOLS: dict[str, ColoredSymbolDef] = {
         (4, 0, "Желтый"),
         (5, 0, "Желтый"),
         (6, 0, "Желтый"),
-        (1, 0, "Зеленый"),
-        (2, 0, "Зеленый"),
+        (7, 0, 7, 14, "Зеленый"),
     ],
     
     # Grapes - Purple berries with brown stem and green leaf
