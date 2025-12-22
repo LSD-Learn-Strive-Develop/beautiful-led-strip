@@ -85,6 +85,9 @@ async def handle_dice(message: Message, app_context: AppContext) -> None:
         await message.reply("Подожди, слоты ещё крутятся! 🎰")
         return
     
+    # Notify admin
+    await _notify_admin(message, app_context, f"крутит слоты 🎰")
+    
     # Notify about jackpot
     from src.led.symbols import is_slot_jackpot
     if is_slot_jackpot(dice_value):
@@ -168,6 +171,9 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
         
         # Display on LED
         if app_context.display_manager.show_slots(dice_value):
+            # Notify admin
+            await _notify_admin(message, app_context, f"крутит слоты 🎰")
+            
             from src.led.symbols import is_slot_jackpot
             if is_slot_jackpot(dice_value):
                 await message.reply("ДЖЕКПОТ!")

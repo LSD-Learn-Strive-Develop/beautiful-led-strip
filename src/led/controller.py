@@ -239,8 +239,8 @@ class LEDController:
         for i in range(offset, offset + self.config.pixels_per_symbol):
             self.pixels[i] = (0, 0, 0)
             self._lit_pixels.discard(i)
-        self.pixels.show()
-
+                self.pixels.show()
+    
     async def show_text(self, text: str, scroll_delay: float = 0.7) -> None:
         """Display scrolling text.
         
