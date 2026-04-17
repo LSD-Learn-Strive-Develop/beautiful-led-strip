@@ -156,18 +156,19 @@ async def run_display_loop(app_context: AppContext) -> None:
                     random_color = dm.get_random_color_from_existing()
                     led.set_color(random_color)
                     app_context.color_storage.save_color(random_color)
-                
-                # New minute: show weather, then time
-                temp_str = weather_service.get_temperature_display()
-                await text_display.show_static_text(temp_str)
-                await asyncio.sleep(5)
-                
+
+                # New minute: show weather (if fresh), then time
+                if weather_service.get_temperature() is not None:
+                    temp_str = weather_service.get_temperature_display()
+                    await text_display.show_static_text(temp_str)
+                    await asyncio.sleep(5)
+
                 await time_display.show_current_time()
                 await asyncio.sleep(5)
             elif color_changed or rainbow_changed or pending_action == "refresh":
                 # Color or rainbow mode changed: just redraw time
                 await time_display.show_current_time()
-        
+
         elif dm.mode.name == "USER":
             if time_changed:
                 # Check if current color is black and replace with random existing color
@@ -175,11 +176,12 @@ async def run_display_loop(app_context: AppContext) -> None:
                     random_color = dm.get_random_color_from_existing()
                     led.set_color(random_color)
                     app_context.color_storage.save_color(random_color)
-                
-                # New minute: show weather, greeting, then time
-                temp_str = weather_service.get_temperature_display()
-                await text_display.show_static_text(temp_str)
-                await asyncio.sleep(5)
+
+                # New minute: show weather (if fresh), greeting, then time
+                if weather_service.get_temperature() is not None:
+                    temp_str = weather_service.get_temperature_display()
+                    await text_display.show_static_text(temp_str)
+                    await asyncio.sleep(5)
                 
                 # Enable rainbow mode for greeting text
                 dm.enable_rainbow()
@@ -218,17 +220,45 @@ async def run_display_loop(app_context: AppContext) -> None:
         await asyncio.sleep(0.1)  # Small delay to prevent tight loop
 
 
+async def _resilient_polling(dp: Dispatcher, bot: Bot) -> None:
+    """Run Telegram polling, retrying indefinitely on network errors.
+
+    Telegram may be unreachable (blocked network, outage). Instead of
+    letting the exception propagate and kill the process, we log and
+    retry with exponential backoff so the display loop keeps running.
+    """
+    retry_delay = 5.0
+    max_retry_delay = 300.0
+
+    while True:
+        try:
+            await dp.start_polling(bot, handle_signals=False)
+            return
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            print(
+                f"Telegram polling error: {e!r}. "
+                f"Retrying in {retry_delay:.0f}s..."
+            )
+            try:
+                await asyncio.sleep(retry_delay)
+            except asyncio.CancelledError:
+                raise
+            retry_delay = min(retry_delay * 2, max_retry_delay)
+
+
 async def run_bot() -> None:
     """Start the Telegram bot and display loop."""
     app_context = await create_app_context()
-    
+
     # Create dispatcher
     dp = Dispatcher()
-    
+
     # Include routers
     dp.include_router(commands.router)
     dp.include_router(messages.router)
-    
+
     # Middleware to inject app_context
     @dp.update.outer_middleware()
     async def inject_context(
@@ -238,13 +268,28 @@ async def run_bot() -> None:
     ) -> Any:
         data["app_context"] = app_context
         return await handler(event, data)
-    
-    # Start display loop
-    async def on_startup() -> None:
-        asyncio.create_task(run_display_loop(app_context))
-    
-    dp.startup.register(on_startup)
-    
-    # Start polling
+
     print("Starting bot...")
-    await dp.start_polling(app_context.bot)
+
+    # Start display loop independently so time keeps displaying even if
+    # Telegram is unreachable (e.g. blocked).
+    display_task = asyncio.create_task(run_display_loop(app_context))
+    polling_task = asyncio.create_task(_resilient_polling(dp, app_context.bot))
+
+    try:
+        done, _ = await asyncio.wait(
+            {display_task, polling_task},
+            return_when=asyncio.FIRST_EXCEPTION,
+        )
+        for task in done:
+            task.result()
+    finally:
+        for task in (display_task, polling_task):
+            if not task.done():
+                task.cancel()
+        for task in (display_task, polling_task):
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
+        await app_context.bot.session.close()
