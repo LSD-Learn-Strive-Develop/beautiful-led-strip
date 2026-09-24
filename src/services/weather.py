@@ -91,7 +91,7 @@ class WeatherService:
                 f"&lang=ru_RU"
             )
             
-            headers = {"X-Yandex-API-Key": self.config.api_key}
+            headers = {"X-Yandex-Weather-Key": self.config.api_key}
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             
