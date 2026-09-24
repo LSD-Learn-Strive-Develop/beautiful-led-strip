@@ -6,6 +6,7 @@ import asyncio
 from typing import Any
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.types import TelegramObject
 
 from src.config import get_config
@@ -41,7 +42,8 @@ async def create_app_context() -> AppContext:
     )
     
     # Initialize bot
-    bot = Bot(token=config.telegram.bot_token)
+    session = AiohttpSession(proxy=config.telegram.proxy_url)
+    bot = Bot(token=config.telegram.bot_token, session=session)
     
     return AppContext(
         config=config,

@@ -48,6 +48,33 @@ Controlled via Telegram bot.
    YANDEX_WEATHER_API_KEY=your_weather_api_key
    ```
 
+### Optional Telegram proxy
+
+Install the dependencies into your existing uv environment:
+
+```bash
+uv pip install -r requirements.txt
+```
+
+Set the proxy URL in `.env`:
+
+```env
+TELEGRAM_PROXY_URL=socks5://user:password@proxy.example.com:1080
+```
+
+Use `socks5://host:port` without authentication, or `http://host:port` for an
+HTTP CONNECT proxy. Percent-encode special characters in the username and
+password (for example, `@` becomes `%40`). MTProto proxies are not supported.
+Leave the variable empty or omit it to connect directly.
+
+The proxy applies only to Telegram Bot API requests, including polling;
+weather requests keep their existing connection settings. Restart the bot
+after changing `.env`. On Raspberry Pi with a uv environment:
+
+```bash
+sudo .venv/bin/python main.py
+```
+
 ## Usage
 
 ```bash

@@ -1,5 +1,6 @@
 # Core dependencies
 aiogram>=3.0
+aiohttp-socks>=0.9
 requests>=2.28
 
 # Hardware (Raspberry Pi only)
