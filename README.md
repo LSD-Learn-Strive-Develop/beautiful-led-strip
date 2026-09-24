@@ -18,33 +18,50 @@ Controlled via Telegram bot.
 - 392-pixel NeoPixel LED strip (4 digits × 7 segments × 14 LEDs)
 - Connected to GPIO pin D18
 
+## Documentation
+
+**`main` is the primary branch for installation and updates.** The working
+Raspberry Pi 3 Model B setup, including the authenticated HTTPS proxy, was
+confirmed on 24 September 2026.
+
+- [Setup summary and working configuration (RU)](docs/raspberry-pi/00-summary.md)
+- [Raspberry Pi: Wi-Fi, SSH, time and tools (RU)](docs/raspberry-pi/01-raspberry-pi-setup.md)
+- [Installation, operation and migration from refactoring to main (RU)](docs/raspberry-pi/02-project-operation.md)
+- [Troubleshooting Python, weather and proxy errors (RU)](docs/raspberry-pi/03-troubleshooting.md)
+
 ## Installation
 
-1. Clone the repository:
+The following commands target Raspberry Pi 3 Model B with Debian and uv.
+
+1. Clone the primary branch:
    ```bash
-   git clone https://github.com/yourusername/beautiful-led-strip.git
+   git clone --branch main https://github.com/LSD-Learn-Strive-Develop/beautiful-led-strip.git
    cd beautiful-led-strip
    ```
 
-2. Install dependencies:
+2. Install build dependencies and create a Python environment:
    ```bash
-   pip install -r requirements.txt
+   sudo apt update
+   sudo apt install -y python3-dev build-essential
+   uv venv --python /usr/bin/python3
+   uv pip install -r requirements.txt
+   ```
+   Use Python 3.11 or newer for HTTPS proxy support. If you select a non-default
+   Python version, install matching development headers.
+
+3. Install Raspberry Pi 3 hardware libraries:
+   ```bash
+   uv pip install adafruit-blinka adafruit-circuitpython-neopixel rpi_ws281x RPi.GPIO
    ```
 
-3. Install Raspberry Pi specific libraries:
+4. Create `.env` if it does not already exist, then fill in your credentials:
    ```bash
-   pip install board neopixel
+   cp -n .env.example .env
+   nano .env
    ```
-
-4. Create `.env` file from example:
-   ```bash
-   cp .env.example .env
-   ```
-
-5. Edit `.env` with your credentials:
    ```env
    TELEGRAM_BOT_TOKEN=your_bot_token
-   TELEGRAM_ADMIN_ID=your_telegram_id
+   TELEGRAM_ADMIN_ID=123456789
    YANDEX_WEATHER_API_KEY=your_weather_api_key
    ```
 
@@ -90,8 +107,10 @@ Reference: https://yandex.ru/dev/weather/doc/ru/concepts/how-to
 
 ## Usage
 
+Run from the project directory on the Raspberry Pi:
+
 ```bash
-python main.py
+sudo .venv/bin/python main.py
 ```
 
 ### Telegram Commands
