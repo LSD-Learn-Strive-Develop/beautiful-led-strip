@@ -63,7 +63,10 @@ TELEGRAM_PROXY_URL=socks5://user:password@proxy.example.com:1080
 ```
 
 Use `socks5://host:port` without authentication, or `http://host:port` for an
-HTTP CONNECT proxy. Percent-encode special characters in the username and
+HTTP CONNECT proxy. For a TLS-encrypted connection to the proxy, use
+`https://user:password@host:443` (Python 3.11 or newer). Certificates are
+verified for both the proxy and Telegram. A `407` response means the proxy
+requires valid credentials. Percent-encode special characters in the username and
 password (for example, `@` becomes `%40`). MTProto proxies are not supported.
 Leave the variable empty or omit it to connect directly.
 

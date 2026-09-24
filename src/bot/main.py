@@ -6,13 +6,13 @@ import asyncio
 from typing import Any
 
 from aiogram import Bot, Dispatcher
-from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.types import TelegramObject
 
 from src.config import get_config
 from src.led.controller import LEDController
 from src.bot.app import AppContext, ColorStorage, DisplayManager
 from src.bot.admin_manager import AdminManager
+from src.bot.session import TelegramSession
 from src.bot.handlers import commands, messages
 
 
@@ -42,7 +42,7 @@ async def create_app_context() -> AppContext:
     )
     
     # Initialize bot
-    session = AiohttpSession(proxy=config.telegram.proxy_url)
+    session = TelegramSession(proxy=config.telegram.proxy_url)
     bot = Bot(token=config.telegram.bot_token, session=session)
     
     return AppContext(
