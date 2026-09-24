@@ -75,6 +75,16 @@ after changing `.env`. On Raspberry Pi with a uv environment:
 sudo .venv/bin/python main.py
 ```
 
+### Yandex Weather API
+
+Weather uses API v3 (GraphQL), as in Yandex's official personal smart-home
+integration: `POST https://api.weather.yandex.ru/graphql/query` with the
+`X-Yandex-Weather-Key` header. Keep the key in `YANDEX_WEATHER_API_KEY` in `.env`.
+The request fetches only the current temperature for `YANDEX_WEATHER_LAT` and
+`YANDEX_WEATHER_LON`. Legacy REST-only keys may require a different API plan.
+
+Reference: https://yandex.ru/dev/weather/doc/ru/concepts/how-to
+
 ## Usage
 
 ```bash

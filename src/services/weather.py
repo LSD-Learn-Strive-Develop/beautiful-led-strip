@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import math
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Tuple
@@ -20,7 +20,7 @@ class WeatherService:
     results to reduce API calls.
     """
     
-    API_URL = "https://api.weather.yandex.ru/v2/informers"
+    API_URL = "https://api.weather.yandex.ru/graphql/query"
     
     def __init__(self, config: WeatherConfig, cache_file: Path):
         """Initialize weather service.
@@ -84,24 +84,36 @@ class WeatherService:
             Temperature string or None on error
         """
         try:
-            url = (
-                f"{self.API_URL}"
-                f"?lat={self.config.latitude}"
-                f"&lon={self.config.longitude}"
-                f"&lang=ru_RU"
+            latitude = float(self.config.latitude)
+            longitude = float(self.config.longitude)
+            if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+                raise ValueError("Weather coordinates are out of range")
+
+            query = (
+                "{ weatherByPoint(request: { lat: "
+                f"{latitude}, lon: {longitude}"
+                " }) { now { temperature } } }"
             )
-            
             headers = {"X-Yandex-Weather-Key": self.config.api_key}
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.post(
+                self.API_URL, headers=headers, json={"query": query}, timeout=10
+            )
             response.raise_for_status()
-            
+
             data = response.json()
-            temperature = str(data["fact"]["temp"])
-            
+            if data.get("errors"):
+                raise ValueError("Weather API returned GraphQL errors")
+            value = data["data"]["weatherByPoint"]["now"]["temperature"]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError("Weather API returned no numeric temperature")
+            if not math.isfinite(value):
+                raise ValueError("Weather API returned a non-finite temperature")
+            temperature = str(round(value))
+
             self._write_cache(temperature)
             return temperature
             
-        except (requests.RequestException, KeyError, json.JSONDecodeError) as e:
+        except (requests.RequestException, KeyError, TypeError, ValueError, AttributeError) as e:
             print(f"Weather API error: {e}")
             return None
     
