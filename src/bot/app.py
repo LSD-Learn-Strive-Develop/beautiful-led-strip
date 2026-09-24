@@ -73,6 +73,9 @@ class DisplayManager:
         self._mode = DisplayMode.MAIN
         self._pending_action: Optional[str] = None
         self._pending_text: Optional[str] = None
+        self._pending_slots: Optional[int] = None  # Dice value for slot machine
+        self._slots_active: bool = False  # True while slots animation is running
+        self._display_busy: bool = False  # True while any animation is running
         self._rainbow_mode: bool = False
         self._new_year_date: datetime = config.new_year_date
     
@@ -127,6 +130,49 @@ class DisplayManager:
         """
         self._pending_text = text
     
+    def show_slots(self, dice_value: int) -> bool:
+        """Request slot machine display.
+        
+        Takes priority over other display modes.
+        Ignores request if slots animation is already running.
+        
+        Args:
+            dice_value: Telegram dice value (1-64)
+            
+        Returns:
+            True if request accepted, False if slots already active
+        """
+        if self._slots_active:
+            return False
+        self._pending_slots = dice_value
+        return True
+    
+    @property
+    def slots_active(self) -> bool:
+        """Check if slots animation is currently running."""
+        return self._slots_active
+    
+    def set_slots_active(self, active: bool) -> None:
+        """Set slots animation state.
+        
+        Args:
+            active: True when animation starts, False when it ends
+        """
+        self._slots_active = active
+    
+    @property
+    def display_busy(self) -> bool:
+        """Check if display is busy with any animation."""
+        return self._display_busy or self._slots_active
+    
+    def set_display_busy(self, busy: bool) -> None:
+        """Set display busy state.
+        
+        Args:
+            busy: True when animation starts, False when it ends
+        """
+        self._display_busy = busy
+    
     def get_pending_action(self) -> Optional[str]:
         """Get and clear pending action.
         
@@ -147,6 +193,16 @@ class DisplayManager:
         self._pending_text = None
         return text
     
+    def get_pending_slots(self) -> Optional[int]:
+        """Get and clear pending slot machine dice value.
+        
+        Returns:
+            Pending dice value (1-64) or None
+        """
+        slots = self._pending_slots
+        self._pending_slots = None
+        return slots
+    
     def enter_fast_mode(self) -> None:
         """Switch to fast countdown mode (final minute)."""
         if self._mode == DisplayMode.FIGHT:
@@ -155,6 +211,16 @@ class DisplayManager:
     def exit_countdown(self) -> None:
         """Exit countdown mode after completion."""
         self._mode = DisplayMode.MAIN
+    
+    def is_countdown_protected(self) -> bool:
+        """Check if countdown is in protected mode (final minute or fast mode).
+        
+        During protected mode, only admins can interact with the display.
+        
+        Returns:
+            True if in FIGHT_FAST mode (last minute before New Year)
+        """
+        return self._mode == DisplayMode.FIGHT_FAST
     
     def get_random_color_from_existing(self) -> tuple[int, int, int]:
         """Get a random color from existing colors (excluding black).

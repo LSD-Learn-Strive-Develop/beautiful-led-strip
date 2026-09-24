@@ -23,6 +23,7 @@ class TelegramConfig:
     """Telegram bot configuration."""
     bot_token: str
     admin_id: int
+    proxy_url: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,7 @@ def load_config() -> Config:
         telegram=TelegramConfig(
             bot_token=_get_env("TELEGRAM_BOT_TOKEN", required=True),
             admin_id=int(_get_env("TELEGRAM_ADMIN_ID", "0")),
+            proxy_url=_get_env("TELEGRAM_PROXY_URL").strip() or None,
         ),
         weather=WeatherConfig(
             api_key=_get_env("YANDEX_WEATHER_API_KEY", required=True),

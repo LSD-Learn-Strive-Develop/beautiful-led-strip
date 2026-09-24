@@ -21,6 +21,10 @@ from typing import List, Optional, Union
 BlockDef = List[int]  # [segment, direction] or [segment, direction, start, end]
 SymbolDef = List[BlockDef]
 
+# Colored block: (segment, direction, color_name) or (segment, direction, start, end, color_name)
+ColoredBlockDef = tuple  # Tuple with color as last element
+ColoredSymbolDef = List[ColoredBlockDef]
+
 # Emoji to color name mapping
 COLORS: dict[str, str] = {
     "❤️": "Красный",
@@ -37,6 +41,7 @@ COLORS: dict[str, str] = {
 # Special action emojis
 EMOJI_RAINBOW = "🌈"
 EMOJI_TEMPERATURE = "🌡"
+EMOJI_SLOTS = "🎰"
 
 # Color name to RGB mapping
 # Note: Values may be adjusted for specific LED hardware
@@ -156,6 +161,56 @@ SPECIAL_CHARS: dict[str, SymbolDef] = {
     "?": [[2, 1], [1, 1], [7, 0], [4, 1, 0, 7], [4, 1, 13, 14]],
 }
 
+# Slot machine symbols with colors
+# Each block is (segment, direction, color_name) or (segment, direction, start, end, color_name)
+# Order matters for animation sequence!
+SLOT_SYMBOLS: dict[str, ColoredSymbolDef] = {
+    # Seven (7) - Red color, styled like casino 7 with middle line
+    # Sequence: segment 2 backward, segment 1 backward, segment 7 forward, segment 4 forward
+    "seven": [
+        (2, 1, "Красный"),
+        (1, 1, "Красный"),
+        (7, 0, "Красный"),
+        (4, 0, "Красный"),
+    ],
+    
+    # BAR - White color, letter B shape
+    # Using standard B definition: all segments lit
+    "bar": [
+        (4, 1, "Белый"),
+        (3, 1, "Белый"),
+        (2, 1, 3, 14, "Белый"),
+        (1, 1, 3, 11, "Белый"),
+        (7, 0, 3, 14, "Белый"),
+        (6, 1, 3, 11, "Белый"),
+        (5, 1, 0, 11, "Белый"),
+    ],
+    
+    # Lemon - Yellow body with green stem
+    # Yellow: segments 7, 4, 5, 6 (forward) - the fruit body
+    # Green: segments 1, 2 (forward) - the stem/leaf
+    "lemon": [
+        (7, 0, "Желтый"),
+        (4, 0, "Желтый"),
+        (5, 0, "Желтый"),
+        (6, 0, "Желтый"),
+        (7, 0, 0, 7, "Зеленый"),
+    ],
+    
+    # Grapes - Purple berries with brown stem and green leaf
+    # Purple: segments 7, 4, 5, 6 (forward) - the grape cluster
+    # Brown: segment 1 (forward) - the stem
+    # Green: segment 2 (forward) - the leaf
+    "grapes": [
+        (7, 0, "Фиолетовый"),
+        (4, 0, "Фиолетовый"),
+        (5, 0, "Фиолетовый"),
+        (6, 0, "Фиолетовый"),
+        (1, 0, "Коричневый"),
+        (2, 0, "Зеленый"),
+    ],
+}
+
 
 def get_symbol_definition(symbol: Union[str, int]) -> Optional[SymbolDef]:
     """Get the block definition for a symbol.
@@ -176,6 +231,55 @@ def get_symbol_definition(symbol: Union[str, int]) -> Optional[SymbolDef]:
         return SPECIAL_CHARS[symbol]
     
     return None
+
+
+def get_slot_symbol_definition(slot_name: str) -> Optional[ColoredSymbolDef]:
+    """Get the colored block definition for a slot machine symbol.
+    
+    Args:
+        slot_name: One of 'bar', 'grapes', 'lemon', 'seven'
+        
+    Returns:
+        List of colored block definitions or None if symbol not found
+    """
+    return SLOT_SYMBOLS.get(slot_name)
+
+
+def get_slot_combo_parts(dice_value: int) -> List[str]:
+    """Get slot machine symbols from dice value.
+    
+    Converts dice value (1-64) to list of three slot symbols.
+    Order is left to right (first displayed to last displayed).
+    
+    Args:
+        dice_value: Dice value from Telegram (1-64)
+        
+    Returns:
+        List of 3 slot symbol names: ['bar'/'grapes'/'lemon'/'seven', ...]
+    """
+    #           0       1         2        3
+    values = ["bar", "grapes", "lemon", "seven"]
+    
+    dice_value -= 1
+    result = []
+    for _ in range(3):
+        result.append(values[dice_value % 4])
+        dice_value //= 4
+    return result
+
+
+def is_slot_jackpot(dice_value: int) -> bool:
+    """Check if dice value is a winning combination (three of a kind).
+    
+    Args:
+        dice_value: Dice value from Telegram (1-64)
+        
+    Returns:
+        True if all three slots match
+    """
+    # Three-of-a-kind values: 1 (bar-bar-bar), 22 (grapes-grapes-grapes), 
+    # 43 (lemon-lemon-lemon), 64 (seven-seven-seven)
+    return dice_value in (1, 22, 43, 64)
 
 
 def is_displayable(text: str) -> bool:

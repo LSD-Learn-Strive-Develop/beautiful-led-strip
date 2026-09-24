@@ -13,6 +13,7 @@ from src.led.symbols import (
     RGB_COLORS,
     EMOJI_RAINBOW,
     EMOJI_TEMPERATURE,
+    EMOJI_SLOTS,
     is_displayable,
 )
 from src.bot.keyboards import get_main_keyboard
@@ -46,6 +47,53 @@ def _check_rate_limit(user_id: int) -> bool:
     return True
 
 
+@router.message(F.dice)
+async def handle_dice(message: Message, app_context: AppContext) -> None:
+    """Handle dice/slot machine stickers.
+    
+    Shows slot machine results on LED display when receiving the 🎰 sticker.
+    """
+    if not message.dice or not message.from_user:
+        return
+    
+    # Only handle slot machine emoji
+    if message.dice.emoji != "🎰":
+        return
+    
+    user_id = message.from_user.id
+    
+    # Block during countdown final minute (except admins)
+    if app_context.display_manager.is_countdown_protected():
+        if not app_context.admin_manager.is_admin(user_id):
+            await message.reply("🎄 Обратный отсчёт! Подожди немного...")
+            return
+    
+    # Block if display is busy with another animation
+    if app_context.display_manager.display_busy:
+        await message.reply("Подожди пару секунд ⏳")
+        return
+    
+    # Rate limiting
+    if not _check_rate_limit(user_id):
+        await message.reply("Попробуй позже ⏳")
+        return
+    
+    dice_value = message.dice.value
+    
+    # Display slot machine on LED (returns False if already running)
+    if not app_context.display_manager.show_slots(dice_value):
+        await message.reply("Подожди, слоты ещё крутятся! 🎰")
+        return
+    
+    # Notify admin
+    await _notify_admin(message, app_context, f"крутит слоты 🎰")
+    
+    # Notify about jackpot
+    from src.led.symbols import is_slot_jackpot
+    if is_slot_jackpot(dice_value):
+        await message.reply("ДЖЕКПОТ!")
+
+
 @router.message(F.text, ~F.text.startswith("/"))
 async def handle_message(message: Message, app_context: AppContext) -> None:
     """Handle all text messages.
@@ -57,6 +105,12 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     user_id = message.from_user.id
     text = message.text
+    is_admin = app_context.admin_manager.is_admin(user_id)
+    
+    # Block during countdown final minute (except admins)
+    if app_context.display_manager.is_countdown_protected() and not is_admin:
+        await message.reply("🎄 Обратный отсчёт! Подожди немного...")
+        return
     
     # Rate limiting
     if not _check_rate_limit(user_id):
@@ -65,7 +119,7 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Mode commands (admin only)
     if text in ("main", "user", "fight"):
-        if app_context.admin_manager.is_admin(user_id):
+        if is_admin:
             app_context.display_manager.set_mode(text)
             await message.answer(f"Режим: {text}", reply_markup=get_main_keyboard())
         else:
@@ -97,13 +151,40 @@ async def handle_message(message: Message, app_context: AppContext) -> None:
     
     # Temperature display
     if text == EMOJI_TEMPERATURE:
+        if app_context.display_manager.display_busy:
+            await message.reply("Подожди пару секунд ⏳")
+            return
         app_context.display_manager.show_temperature()
         await message.answer("🌡", reply_markup=get_main_keyboard())
         return
     
+    # Slot machine - send dice and show on LED
+    if text == EMOJI_SLOTS:
+        # Check if display is busy
+        if app_context.display_manager.display_busy:
+            await message.reply("Подожди пару секунд ⏳")
+            return
+        
+        # Send dice and get the result
+        dice_message = await message.answer_dice(emoji="🎰")
+        dice_value = dice_message.dice.value
+        
+        # Display on LED
+        if app_context.display_manager.show_slots(dice_value):
+            # Notify admin
+            await _notify_admin(message, app_context, f"крутит слоты 🎰")
+            
+            from src.led.symbols import is_slot_jackpot
+            if is_slot_jackpot(dice_value):
+                await message.reply("ДЖЕКПОТ!")
+        return
+    
     # Text display (admin only)
     if is_displayable(text.upper()):
-        if app_context.admin_manager.is_admin(user_id):
+        if app_context.display_manager.display_busy:
+            await message.reply("Подожди пару секунд ⏳")
+            return
+        if is_admin:
             app_context.display_manager.show_text(text.upper())
             await _notify_admin(message, app_context, f"показал текст: {text}")
             await message.answer("Текст отправлен 📝", reply_markup=get_main_keyboard())

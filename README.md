@@ -18,40 +18,99 @@ Controlled via Telegram bot.
 - 392-pixel NeoPixel LED strip (4 digits × 7 segments × 14 LEDs)
 - Connected to GPIO pin D18
 
+## Documentation
+
+**`main` is the primary branch for installation and updates.** The working
+Raspberry Pi 3 Model B setup, including the authenticated HTTPS proxy, was
+confirmed on 24 September 2026.
+
+- [Setup summary and working configuration (RU)](docs/raspberry-pi/00-summary.md)
+- [Raspberry Pi: Wi-Fi, SSH, time and tools (RU)](docs/raspberry-pi/01-raspberry-pi-setup.md)
+- [Installation, operation and migration from refactoring to main (RU)](docs/raspberry-pi/02-project-operation.md)
+- [Troubleshooting Python, weather and proxy errors (RU)](docs/raspberry-pi/03-troubleshooting.md)
+
 ## Installation
 
-1. Clone the repository:
+The following commands target Raspberry Pi 3 Model B with Debian and uv.
+
+1. Clone the primary branch:
    ```bash
-   git clone https://github.com/yourusername/beautiful-led-strip.git
+   git clone --branch main https://github.com/LSD-Learn-Strive-Develop/beautiful-led-strip.git
    cd beautiful-led-strip
    ```
 
-2. Install dependencies:
+2. Install build dependencies and create a Python environment:
    ```bash
-   pip install -r requirements.txt
+   sudo apt update
+   sudo apt install -y python3-dev build-essential
+   uv venv --python /usr/bin/python3
+   uv pip install -r requirements.txt
+   ```
+   Use Python 3.11 or newer for HTTPS proxy support. If you select a non-default
+   Python version, install matching development headers.
+
+3. Install Raspberry Pi 3 hardware libraries:
+   ```bash
+   uv pip install adafruit-blinka adafruit-circuitpython-neopixel rpi_ws281x RPi.GPIO
    ```
 
-3. Install Raspberry Pi specific libraries:
+4. Create `.env` if it does not already exist, then fill in your credentials:
    ```bash
-   pip install board neopixel
+   cp -n .env.example .env
+   nano .env
    ```
-
-4. Create `.env` file from example:
-   ```bash
-   cp .env.example .env
-   ```
-
-5. Edit `.env` with your credentials:
    ```env
    TELEGRAM_BOT_TOKEN=your_bot_token
-   TELEGRAM_ADMIN_ID=your_telegram_id
+   TELEGRAM_ADMIN_ID=123456789
    YANDEX_WEATHER_API_KEY=your_weather_api_key
    ```
 
-## Usage
+### Optional Telegram proxy
+
+Install the dependencies into your existing uv environment:
 
 ```bash
-python main.py
+uv pip install -r requirements.txt
+```
+
+Set the proxy URL in `.env`:
+
+```env
+TELEGRAM_PROXY_URL=socks5://user:password@proxy.example.com:1080
+```
+
+Use `socks5://host:port` without authentication, or `http://host:port` for an
+HTTP CONNECT proxy. For a TLS-encrypted connection to the proxy, use
+`https://user:password@host:443` (Python 3.11 or newer). Certificates are
+verified for both the proxy and Telegram. A `407` response means the proxy
+requires valid credentials. Percent-encode special characters in the username and
+password (for example, `@` becomes `%40`). MTProto proxies are not supported.
+Leave the variable empty or omit it to connect directly.
+
+The proxy applies only to Telegram Bot API requests, including polling;
+weather requests keep their existing connection settings. Restart the bot
+after changing `.env`. On Raspberry Pi with a uv environment:
+
+```bash
+sudo .venv/bin/python main.py
+```
+
+### Yandex Weather API
+
+Weather uses API v3 (GraphQL), as in Yandex's official personal smart-home
+integration: `POST https://api.weather.yandex.ru/graphql/query` with the
+`X-Yandex-Weather-Key` header. Keep the key in `YANDEX_WEATHER_API_KEY` in `.env`.
+The request fetches only the current temperature for `YANDEX_WEATHER_LAT` and
+`YANDEX_WEATHER_LON`. Legacy REST-only keys may require a different API plan.
+
+Reference: https://yandex.ru/dev/weather/doc/ru/concepts/how-to
+
+## Usage
+
+Run from the project directory on the Raspberry Pi:
+
+```bash
+sudo .venv/bin/python main.py
 ```
 
 ### Telegram Commands
